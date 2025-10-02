@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV TO JSON</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        /* Gaya Dasar & Tipografi */
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #eef2f5; /* Latar belakang lebih lembut */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+        #container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); /* Bayangan lebih halus */
+            max-width: 800px;
+            width: 100%;
+            margin-top: 40px;
+        }
+        h1 {
+            color: #4a148c; /* Warna ungu gelap */
+            font-weight: 600;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        h2 {
+            color: #6a1b9a;
+            font-weight: 400;
+            margin-top: 25px;
+        }
+        p {
+            color: #555;
+            line-height: 1.6;
+        }
+        hr {
+            border: 0;
+            height: 1px;
+            background-color: #ddd;
+            margin: 30px 0;
+        }
+
+        /* Gaya Input dan Tombol */
+        input[type="file"] {
+            display: block;
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background-color: #f9f9f9;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 12px 25px;
+            background-color: #9c27b0; /* Warna utama ungu */
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+        }
+        button:hover {
+            background-color: #7b1fa2;
+            transform: translateY(-2px);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        
+        /* Gaya Output JSON */
+        pre {
+            background-color: #272822; /* Latar belakang gelap untuk kode */
+            color: #f8f8f2; /* Teks terang */
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 450px;
+            margin-top: 20px;
+            border: 1px solid #444;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        
+        /* Gaya Tautan Unduh */
+        #downloadLink {
+            display: none;
+            margin-top: 20px;
+            padding: 12px 25px;
+            background-color: #4CAF50; /* Hijau yang lebih cerah */
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+        #downloadLink:hover {
+            background-color: #45a049;
+        }
+        
+    </style>
+</head>
+<body>
+
+<div id="container">
+    <h1>CSV TO JSON</h1>
+    <p>Pilih ketiga file yang sesuai: **UGD_BARCODE.CSV**, **UGD_RAK.CSV**, dan **UGD_PRODMAST.CSV**.</p>
+    
+    <input type="file" id="csvFile" accept=".csv" multiple>
+    <button onclick="performJoin()">Gabungkan & Konversi</button>
+
+    <hr>
+
+    <h2>Hasil JSON Gabungan:</h2>
+    <pre id="jsonOutput">Pilih dan unggah ketiga berkas CSV yang diperlukan.</pre>
+    <a id="downloadLink" href="#" download="data_gabungan_selektif.json">Unduh JSON Gabungan</a>
+
+</div>
+
+<script>
+    // --- KONFIGURASI KOLOM YANG DIAMBIL ---
+    // PLU dan PLUMD dianggap sebagai KUNCI PENGGABUNGAN.
+    const FILE_CONFIG = {
+        'UGD_BARCODE.CSV': {
+            keyColumn: 'PLU',
+            columns: ['PLU', 'BARCD']
+        },
+        'UGD_RAK.CSV': {
+            keyColumn: 'PLUMD',
+            columns: ['PLUMD', 'NAMA_RAK', 'NOSHELF', 'KIRIKANAN']
+        },
+        'UGD_PRODMAST.CSV': {
+            keyColumn: 'PLUMD',
+            columns: ['PLUMD', 'SINGKATAN', 'PRICE']
+        }
+    };
+    // ------------------------------------
+
+
+    /**
+     * Konversi string CSV (pemisah '|') menjadi array objek, hanya mengambil kolom yang ditentukan.
+     * @param {string} csvString - Konten CSV.
+     * @param {string} fileName - Nama file untuk mencocokkan konfigurasi.
+     * @returns {Array<Object>} Array objek data selektif.
+     */
+    function csvToJsonSelective(csvString, fileName) {
+        const config = Object.keys(FILE_CONFIG).find(name => fileName.toUpperCase().includes(name.replace('.CSV', '')));
+        if (!config) {
+            throw new Error(`File ${fileName} tidak dikenali atau tidak dikonfigurasi.`);
+        }
+        
+        const { columns, keyColumn } = FILE_CONFIG[config];
+        const delimiter = '|'; // Pemisah yang diminta
+
+        const lines = csvString.split('\n').filter(line => line.trim() !== '');
+        if (lines.length === 0) return [];
+
+        // Ambil header asli dari file CSV
+        const fileHeaders = lines[0].split(delimiter).map(h => h.trim().toUpperCase());
+        
+        // Buat map (peta) untuk menemukan indeks kolom yang diinginkan
+        const columnIndices = {};
+        columns.forEach(col => {
+            const index = fileHeaders.indexOf(col.toUpperCase());
+            if (index === -1) {
+                 // Warning: Jika kolom kunci tidak ditemukan, berikan error kritis
+                 if (col === keyColumn) {
+                    throw new Error(`Kolom kunci '${keyColumn}' tidak ditemukan di file ${fileName}.`);
+                 }
+                console.warn(`Kolom '${col}' tidak ditemukan di ${fileName}. Akan diabaikan.`);
+            }
+            columnIndices[col] = index;
+        });
+
+        const result = [];
+
+        // Iterasi baris data (mulai dari baris ke-2)
+        for (let i = 1; i < lines.length; i++) {
+            const currentLine = lines[i].split(delimiter);
+            const obj = {};
+            
+            let keyFound = false;
+
+            for (const colName of columns) {
+                const index = columnIndices[colName];
+                if (index !== -1 && index < currentLine.length) {
+                    const value = currentLine[index].trim();
+                    obj[colName] = value;
+                    if (colName === keyColumn) {
+                        keyFound = true;
+                    }
+                } else {
+                    obj[colName] = ''; // Kolom tidak ditemukan atau nilai kosong
+                }
+            }
+
+            // Hanya masukkan data jika kolom kunci ditemukan dan tidak kosong
+            if (keyFound && obj[keyColumn] !== '') {
+                result.push(obj);
+            }
+        }
+
+        return { keyColumn, data: result };
+    }
+
+    /**
+     * Membaca dan memproses satu berkas CSV
+     */
+    function processFile(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    const data = csvToJsonSelective(e.target.result, file.name);
+                    resolve(data);
+                } catch (error) {
+                    reject(error);
+                }
+            };
+            reader.onerror = function() {
+                reject(`Gagal membaca berkas ${file.name}.`);
+            };
+            reader.readAsText(file);
+        });
+    }
+
+    /**
+     * Fungsi utama untuk melakukan JOIN (penggabungan) data.
+     */
+    async function performJoin() {
+        const fileInput = document.getElementById('csvFile');
+        const outputElement = document.getElementById('jsonOutput');
+        const downloadLink = document.getElementById('downloadLink');
+
+        outputElement.textContent = 'Memproses dan menggabungkan data...';
+        downloadLink.style.display = 'none';
+
+        if (fileInput.files.length === 0) {
+            outputElement.textContent = "Mohon pilih berkas CSV.";
+            return;
+        }
+        
+        const files = Array.from(fileInput.files);
+        
+        if (files.length < 3) {
+             outputElement.textContent = "Mohon pilih ketiga berkas yang diperlukan: UGD_BARCODE, UGD_RAK, dan UGD_PRODMAST.";
+            return;
+        }
+
+        try {
+            // 1. Proses semua file secara asinkron
+            const results = await Promise.all(files.map(processFile));
+
+            // 2. Persiapkan struktur data untuk JOIN
+            const mapData = {}; // Digunakan untuk menyimpan data dari semua file
+
+            results.forEach(({ keyColumn, data }) => {
+                data.forEach(item => {
+                    const keyValue = item[keyColumn]; // Nilai PLU atau PLUMD
+                    
+                    if (!mapData[keyValue]) {
+                        // Inisialisasi item baru dengan kunci PLU/PLUMD
+                        mapData[keyValue] = { PLUMD: keyValue };
+                    }
+                    
+                    // Gabungkan data (kecuali kolom kunci yang berulang)
+                    Object.assign(mapData[keyValue], item);
+                });
+            });
+
+            // 3. Konversi mapData menjadi array JSON akhir
+            // Hapus data yang tidak memiliki semua data kunci (jika diperlukan, ini adalah simple INNER JOIN)
+            const finalJsonArray = Object.values(mapData);
+            
+            // 4. Output dan Unduh
+            const jsonString = JSON.stringify(finalJsonArray, null, 2);
+
+            outputElement.textContent = jsonString;
+
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            // --- LOGIKA UNTUK NAMA FILE DENGAN TIMESTAMP ---
+            const now = new Date();
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0'); // Bulan dimulai dari 0
+            const year = now.getFullYear();
+            const fileName = `${day}${month}${year}.json`; 
+            // ----------------------------------------------
+
+            downloadLink.href = url;
+            downloadLink.download = fileName; // Menggunakan nama file timestamp
+            downloadLink.textContent = `Unduh JSON Gabungan (${fileName})`;
+            downloadLink.style.display = 'block';
+
+            console.log(`Berhasil menggabungkan ${finalJsonArray.length} record.`);
+
+        } catch (error) {
+            outputElement.textContent = `Terjadi Kesalahan Kritis: ${error}`;
+            downloadLink.style.display = 'none';
+        }
+    }
+</script>
+
+</body>
+</html>
