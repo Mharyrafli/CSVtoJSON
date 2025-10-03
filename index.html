@@ -158,12 +158,13 @@
      * @returns {Array<Object>} Array objek data selektif.
      */
     function csvToJsonSelective(csvString, fileName) {
-        const config = Object.keys(FILE_CONFIG).find(name => fileName.toUpperCase().includes(name.replace('.CSV', '')));
-        if (!config) {
+        // Normalisasi nama file untuk pencocokan (misal: "my_UGD_PRODMAST.csv" akan tetap dikenali)
+        const configKey = Object.keys(FILE_CONFIG).find(name => fileName.toUpperCase().includes(name.replace('.CSV', '')));
+        if (!configKey) {
             throw new Error(`File ${fileName} tidak dikenali atau tidak dikonfigurasi.`);
         }
         
-        const { columns, keyColumn } = FILE_CONFIG[config];
+        const { columns, keyColumn } = FILE_CONFIG[configKey];
         const delimiter = '|'; // Pemisah yang diminta
 
         const lines = csvString.split('\n').filter(line => line.trim() !== '');
@@ -174,14 +175,15 @@
         
         // Buat map (peta) untuk menemukan indeks kolom yang diinginkan
         const columnIndices = {};
+        let allColumnsFound = true;
         columns.forEach(col => {
             const index = fileHeaders.indexOf(col.toUpperCase());
             if (index === -1) {
-                 // Warning: Jika kolom kunci tidak ditemukan, berikan error kritis
                  if (col === keyColumn) {
                     throw new Error(`Kolom kunci '${keyColumn}' tidak ditemukan di file ${fileName}.`);
                  }
                 console.warn(`Kolom '${col}' tidak ditemukan di ${fileName}. Akan diabaikan.`);
+                allColumnsFound = false;
             }
             columnIndices[col] = index;
         });
@@ -214,7 +216,7 @@
             }
         }
 
-        return { keyColumn, data: result };
+        return { keyColumn, data: result, fileName: configKey };
     }
 
     /**
@@ -241,6 +243,7 @@
 
     /**
      * Fungsi utama untuk melakukan JOIN (penggabungan) data.
+     * LOGIKA BARU: Memastikan duplikasi record jika PLUMD/PLU memiliki NAMA_RAK yang berbeda.
      */
     async function performJoin() {
         const fileInput = document.getElementById('csvFile');
@@ -266,26 +269,58 @@
             // 1. Proses semua file secara asinkron
             const results = await Promise.all(files.map(processFile));
 
-            // 2. Persiapkan struktur data untuk JOIN
-            const mapData = {}; // Digunakan untuk menyimpan data dari semua file
+            // Pisahkan data berdasarkan nama file yang dikonfigurasi
+            const barcodeData = results.find(r => r.fileName === 'UGD_BARCODE.CSV');
+            const rakData = results.find(r => r.fileName === 'UGD_RAK.CSV');
+            const prodmastData = results.find(r => r.fileName === 'UGD_PRODMAST.CSV');
 
-            results.forEach(({ keyColumn, data }) => {
-                data.forEach(item => {
-                    const keyValue = item[keyColumn]; // Nilai PLU atau PLUMD
-                    
-                    if (!mapData[keyValue]) {
-                        // Inisialisasi item baru dengan kunci PLU/PLUMD
-                        mapData[keyValue] = { PLUMD: keyValue };
-                    }
-                    
-                    // Gabungkan data (kecuali kolom kunci yang berulang)
-                    Object.assign(mapData[keyValue], item);
-                });
+            if (!barcodeData || !rakData || !prodmastData) {
+                throw new Error("Tiga berkas yang diperlukan (UGD_BARCODE, UGD_RAK, UGD_PRODMAST) tidak lengkap atau tidak dikenali.");
+            }
+
+            // 2. Persiapkan Maps untuk pencarian cepat
+            // BARCODE: PLU -> { BARCD }
+            const barcodeMap = new Map();
+            barcodeData.data.forEach(item => {
+                // Di sini, kita asumsikan PLU hanya memiliki satu BARCD
+                barcodeMap.set(item.PLU, { BARCD: item.BARCD });
             });
 
-            // 3. Konversi mapData menjadi array JSON akhir
-            // Hapus data yang tidak memiliki semua data kunci (jika diperlukan, ini adalah simple INNER JOIN)
-            const finalJsonArray = Object.values(mapData);
+            // PRODMAST: PLUMD -> { SINGKATAN, PRICE }
+            const prodmastMap = new Map();
+            prodmastData.data.forEach(item => {
+                prodmastMap.set(item.PLUMD, { SINGKATAN: item.SINGKATAN, PRICE: item.PRICE });
+            });
+            
+            // 3. Lakukan penggabungan (JOIN)
+            const finalJsonArray = [];
+            
+            // Iterasi melalui data RAK. Karena ini yang mungkin memiliki duplikasi (beberapa RAK untuk satu PLUMD).
+            // Ini akan memastikan setiap baris RAK dipertahankan.
+            rakData.data.forEach(rakItem => {
+                const plumd = rakItem.PLUMD;
+                
+                // Ambil data PRODMAST (berdasarkan PLUMD)
+                const prodmastItem = prodmastMap.get(plumd) || { SINGKATAN: '', PRICE: '' };
+                
+                // Ambil data BARCODE (berdasarkan PLU/PLUMD)
+                // Diasumsikan PLU di BARCODE sama dengan PLUMD di RAK/PRODMAST
+                const barcodeItem = barcodeMap.get(plumd) || { BARCD: '' };
+
+                // Bentuk objek gabungan. Jika ada 2 RAK untuk 1 PLUMD, akan terbentuk 2 objek.
+                const combinedItem = {
+                    PLUMD: plumd,
+                    SINGKATAN: prodmastItem.SINGKATAN,
+                    PRICE: prodmastItem.PRICE,
+                    BARCD: barcodeItem.BARCD,
+                    NAMA_RAK: rakItem.NAMA_RAK,
+                    NOSHELF: rakItem.NOSHELF,
+                    KIRIKANAN: rakItem.KIRIKANAN,
+                };
+                
+                // Tambahkan ke array hasil akhir
+                finalJsonArray.push(combinedItem);
+            });
             
             // 4. Output dan Unduh
             const jsonString = JSON.stringify(finalJsonArray, null, 2);
