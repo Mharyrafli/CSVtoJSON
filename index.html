@@ -4,14 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CSV TO JSON</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        /* Gaya Dasar & Tipografi */
+        :root {
+            --primary-color: #00bcd4;
+            --primary-dark: #0097a7;
+            --secondary-color: #4db6ac;
+            --background-light: #f4f6f9;
+            --text-dark: #333;
+            --text-light: #f8f8f2;
+            --code-background: #263238;
+            --success-color: #4CAF50;
+        }
+
         body {
             font-family: 'Poppins', sans-serif;
             margin: 0;
             padding: 20px;
-            background-color: #eef2f5; /* Latar belakang lebih lembut */
+            background-color: var(--background-light);
             display: flex;
             justify-content: center;
             align-items: flex-start;
@@ -20,27 +31,37 @@
         #container {
             background: white;
             padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); /* Bayangan lebih halus */
-            max-width: 800px;
+            border-radius: 16px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            max-width: 900px;
             width: 100%;
             margin-top: 40px;
+            border: 1px solid #eee;
         }
         h1 {
-            color: #4a148c; /* Warna ungu gelap */
-            font-weight: 600;
-            border-bottom: 2px solid #e0e0e0;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
+            color: var(--primary-dark);
+            font-weight: 700;
+            border-bottom: 3px solid var(--primary-color);
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            font-size: 28px;
+            text-align: center;
         }
         h2 {
-            color: #6a1b9a;
-            font-weight: 400;
-            margin-top: 25px;
+            color: var(--text-dark);
+            font-weight: 600;
+            margin-top: 35px;
+            font-size: 20px;
         }
         p {
             color: #555;
-            line-height: 1.6;
+            line-height: 1.7;
+            margin-bottom: 20px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        strong {
+            color: var(--primary-dark);
         }
         hr {
             border: 0;
@@ -49,77 +70,137 @@
             margin: 30px 0;
         }
 
-        /* Gaya Input dan Tombol */
+        #fileList {
+            list-style: none;
+            padding-left: 0;
+            margin-top: 10px;
+            margin-bottom: 25px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        #fileList li {
+            background-color: #e0f7fa;
+            padding: 8px 15px;
+            border-left: 4px solid var(--primary-color);
+            border-radius: 4px;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--primary-dark);
+        }
+
+
         input[type="file"] {
             display: block;
-            margin-bottom: 15px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
+            margin-bottom: 20px;
+            padding: 12px;
+            border: 2px dashed #ccc;
+            border-radius: 10px;
             background-color: #f9f9f9;
             width: 100%;
             box-sizing: border-box;
+            transition: border-color 0.3s ease;
+            cursor: pointer;
         }
+        input[type="file"]:hover {
+            border-color: var(--secondary-color);
+        }
+
         button {
-            padding: 12px 25px;
-            background-color: #9c27b0; /* Warna utama ungu */
+            display: block;
+            width: 100%;
+            padding: 14px 30px;
+            background-color: var(--primary-color);
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 17px;
             font-weight: 600;
-            transition: background-color 0.3s ease, transform 0.1s ease;
+            transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 188, 212, 0.4);
+            letter-spacing: 0.5px;
+            box-sizing: border-box;
         }
         button:hover {
-            background-color: #7b1fa2;
+            background-color: var(--primary-dark);
             transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 188, 212, 0.6);
         }
         button:active {
             transform: translateY(0);
+            box-shadow: 0 4px 15px rgba(0, 188, 212, 0.4);
         }
-        
-        /* Gaya Output JSON */
+
         pre {
-            background-color: #272822; /* Latar belakang gelap untuk kode */
-            color: #f8f8f2; /* Teks terang */
-            padding: 20px;
-            border-radius: 6px;
+            background-color: var(--code-background);
+            color: var(--text-light);
+            padding: 25px;
+            border-radius: 10px;
             overflow-x: auto;
             white-space: pre-wrap;
             word-wrap: break-word;
-            max-height: 450px;
+            max-height: 500px;
             margin-top: 20px;
-            border: 1px solid #444;
-            font-family: monospace;
+            border: 1px solid #37474f;
+            font-family: 'Consolas', 'Courier New', monospace;
             font-size: 14px;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
         }
-        
-        /* Gaya Tautan Unduh */
+
         #downloadLink {
             display: none;
-            margin-top: 20px;
-            padding: 12px 25px;
-            background-color: #4CAF50; /* Hijau yang lebih cerah */
+            margin-top: 25px;
+            padding: 14px 30px;
+            background-color: var(--primary-color);
             color: white;
             text-decoration: none;
-            border-radius: 6px;
+            border-radius: 8px;
             text-align: center;
             font-weight: 600;
-            transition: background-color 0.3s ease;
+            font-size: 17px;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            
+            width: 100%;
+            box-sizing: border-box;
         }
         #downloadLink:hover {
-            background-color: #45a049;
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            
         }
-        
+
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            #container {
+                margin-top: 10px;
+                padding: 20px;
+            }
+            h1 {
+                font-size: 24px;
+            }
+            #fileList {
+                 grid-template-columns: 1fr;
+            }
+        }
+
     </style>
 </head>
 <body>
 
 <div id="container">
     <h1>CSV TO JSON</h1>
-    <p>Pilih ketiga file yang sesuai: **UGD_BARCODE.CSV**, **UGD_RAK.CSV**, dan **UGD_PRODMAST.CSV**.</p>
-    
+
+    <p>File CSV yang diperlukan:</p>
+
+    <ul id="fileList">
+        <li>UGD_BARCODE.CSV</li>
+        <li>UGD_RAK.CSV</li>
+        <li>UGD_PRODMAST.CSV</li>
+    </ul>
+
     <input type="file" id="csvFile" accept=".csv" multiple>
     <button onclick="performJoin()">Gabungkan & Konversi</button>
 
@@ -127,13 +208,11 @@
 
     <h2>Hasil JSON Gabungan:</h2>
     <pre id="jsonOutput">Pilih dan unggah ketiga berkas CSV yang diperlukan.</pre>
-    <a id="downloadLink" href="#" download="data_gabungan_selektif.json">Unduh JSON Gabungan</a>
+    <a id="downloadLink" href="#" download="data_gabungan.json">Unduh JSON Gabungan</a>
 
 </div>
 
 <script>
-    // --- KONFIGURASI KOLOM YANG DIAMBIL ---
-    // PLU dan PLUMD dianggap sebagai KUNCI PENGGABUNGAN.
     const FILE_CONFIG = {
         'UGD_BARCODE.CSV': {
             keyColumn: 'PLU',
@@ -148,53 +227,49 @@
             columns: ['PLUMD', 'SINGKATAN', 'PRICE']
         }
     };
-    // ------------------------------------
 
+    function showNotification(title, icon) {
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: icon,
+            title: title,
+            showConfirmButton: false,
+            timer: 2000,
+            timerProgressBar: true
+        });
+    }
 
-    /**
-     * Konversi string CSV (pemisah '|') menjadi array objek, hanya mengambil kolom yang ditentukan.
-     * @param {string} csvString - Konten CSV.
-     * @param {string} fileName - Nama file untuk mencocokkan konfigurasi.
-     * @returns {Array<Object>} Array objek data selektif.
-     */
     function csvToJsonSelective(csvString, fileName) {
-        // Normalisasi nama file untuk pencocokan (misal: "my_UGD_PRODMAST.csv" akan tetap dikenali)
         const configKey = Object.keys(FILE_CONFIG).find(name => fileName.toUpperCase().includes(name.replace('.CSV', '')));
         if (!configKey) {
             throw new Error(`File ${fileName} tidak dikenali atau tidak dikonfigurasi.`);
         }
-        
+
         const { columns, keyColumn } = FILE_CONFIG[configKey];
-        const delimiter = '|'; // Pemisah yang diminta
+        const delimiter = '|';
 
         const lines = csvString.split('\n').filter(line => line.trim() !== '');
         if (lines.length === 0) return [];
 
-        // Ambil header asli dari file CSV
         const fileHeaders = lines[0].split(delimiter).map(h => h.trim().toUpperCase());
-        
-        // Buat map (peta) untuk menemukan indeks kolom yang diinginkan
+
         const columnIndices = {};
-        let allColumnsFound = true;
+
         columns.forEach(col => {
             const index = fileHeaders.indexOf(col.toUpperCase());
-            if (index === -1) {
-                 if (col === keyColumn) {
-                    throw new Error(`Kolom kunci '${keyColumn}' tidak ditemukan di file ${fileName}.`);
-                 }
-                console.warn(`Kolom '${col}' tidak ditemukan di ${fileName}. Akan diabaikan.`);
-                allColumnsFound = false;
-            }
             columnIndices[col] = index;
+            if (index === -1 && col === keyColumn) {
+                throw new Error(`Kolom kunci wajib '${keyColumn}' tidak ditemukan di file ${fileName}.`);
+            }
         });
 
         const result = [];
 
-        // Iterasi baris data (mulai dari baris ke-2)
         for (let i = 1; i < lines.length; i++) {
             const currentLine = lines[i].split(delimiter);
             const obj = {};
-            
+
             let keyFound = false;
 
             for (const colName of columns) {
@@ -202,16 +277,15 @@
                 if (index !== -1 && index < currentLine.length) {
                     const value = currentLine[index].trim();
                     obj[colName] = value;
-                    if (colName === keyColumn) {
+                    if (colName === keyColumn && value !== '') {
                         keyFound = true;
                     }
                 } else {
-                    obj[colName] = ''; // Kolom tidak ditemukan atau nilai kosong
+                    obj[colName] = '';
                 }
             }
 
-            // Hanya masukkan data jika kolom kunci ditemukan dan tidak kosong
-            if (keyFound && obj[keyColumn] !== '') {
+            if (keyFound) {
                 result.push(obj);
             }
         }
@@ -219,13 +293,10 @@
         return { keyColumn, data: result, fileName: configKey };
     }
 
-    /**
-     * Membaca dan memproses satu berkas CSV
-     */
     function processFile(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
-            
+
             reader.onload = function(e) {
                 try {
                     const data = csvToJsonSelective(e.target.result, file.name);
@@ -241,35 +312,40 @@
         });
     }
 
-    /**
-     * Fungsi utama untuk melakukan JOIN (penggabungan) data.
-     * LOGIKA BARU: Memastikan duplikasi record jika PLUMD/PLU memiliki NAMA_RAK yang berbeda.
-     */
+    function getDatedFileName() {
+        const now = new Date();
+        const day = String(now.getDate()).padStart(2, '0');
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const year = now.getFullYear();
+        return `${day}${month}${year}.json`;
+    }
+
     async function performJoin() {
         const fileInput = document.getElementById('csvFile');
         const outputElement = document.getElementById('jsonOutput');
         const downloadLink = document.getElementById('downloadLink');
 
-        outputElement.textContent = 'Memproses dan menggabungkan data...';
         downloadLink.style.display = 'none';
+
+        outputElement.textContent = 'Memproses dan menggabungkan data...';
 
         if (fileInput.files.length === 0) {
             outputElement.textContent = "Mohon pilih berkas CSV.";
+            showNotification('Mohon pilih berkas CSV', 'warning');
             return;
         }
-        
+
         const files = Array.from(fileInput.files);
-        
+
         if (files.length < 3) {
              outputElement.textContent = "Mohon pilih ketiga berkas yang diperlukan: UGD_BARCODE, UGD_RAK, dan UGD_PRODMAST.";
+             showNotification('Pilih 3 berkas lengkap', 'warning');
             return;
         }
 
         try {
-            // 1. Proses semua file secara asinkron
             const results = await Promise.all(files.map(processFile));
 
-            // Pisahkan data berdasarkan nama file yang dikonfigurasi
             const barcodeData = results.find(r => r.fileName === 'UGD_BARCODE.CSV');
             const rakData = results.find(r => r.fileName === 'UGD_RAK.CSV');
             const prodmastData = results.find(r => r.fileName === 'UGD_PRODMAST.CSV');
@@ -278,36 +354,25 @@
                 throw new Error("Tiga berkas yang diperlukan (UGD_BARCODE, UGD_RAK, UGD_PRODMAST) tidak lengkap atau tidak dikenali.");
             }
 
-            // 2. Persiapkan Maps untuk pencarian cepat
-            // BARCODE: PLU -> { BARCD }
             const barcodeMap = new Map();
             barcodeData.data.forEach(item => {
-                // Di sini, kita asumsikan PLU hanya memiliki satu BARCD
                 barcodeMap.set(item.PLU, { BARCD: item.BARCD });
             });
 
-            // PRODMAST: PLUMD -> { SINGKATAN, PRICE }
             const prodmastMap = new Map();
             prodmastData.data.forEach(item => {
                 prodmastMap.set(item.PLUMD, { SINGKATAN: item.SINGKATAN, PRICE: item.PRICE });
             });
-            
-            // 3. Lakukan penggabungan (JOIN)
+
             const finalJsonArray = [];
-            
-            // Iterasi melalui data RAK. Karena ini yang mungkin memiliki duplikasi (beberapa RAK untuk satu PLUMD).
-            // Ini akan memastikan setiap baris RAK dipertahankan.
+
             rakData.data.forEach(rakItem => {
                 const plumd = rakItem.PLUMD;
-                
-                // Ambil data PRODMAST (berdasarkan PLUMD)
+
                 const prodmastItem = prodmastMap.get(plumd) || { SINGKATAN: '', PRICE: '' };
-                
-                // Ambil data BARCODE (berdasarkan PLU/PLUMD)
-                // Diasumsikan PLU di BARCODE sama dengan PLUMD di RAK/PRODMAST
+
                 const barcodeItem = barcodeMap.get(plumd) || { BARCD: '' };
 
-                // Bentuk objek gabungan. Jika ada 2 RAK untuk 1 PLUMD, akan terbentuk 2 objek.
                 const combinedItem = {
                     PLUMD: plumd,
                     SINGKATAN: prodmastItem.SINGKATAN,
@@ -317,37 +382,34 @@
                     NOSHELF: rakItem.NOSHELF,
                     KIRIKANAN: rakItem.KIRIKANAN,
                 };
-                
-                // Tambahkan ke array hasil akhir
+
                 finalJsonArray.push(combinedItem);
             });
-            
-            // 4. Output dan Unduh
+
             const jsonString = JSON.stringify(finalJsonArray, null, 2);
 
             outputElement.textContent = jsonString;
 
             const blob = new Blob([jsonString], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
-            
-            // --- LOGIKA UNTUK NAMA FILE DENGAN TIMESTAMP ---
-            const now = new Date();
-            const day = String(now.getDate()).padStart(2, '0');
-            const month = String(now.getMonth() + 1).padStart(2, '0'); // Bulan dimulai dari 0
-            const year = now.getFullYear();
-            const fileName = `${day}${month}${year}.json`; 
-            // ----------------------------------------------
+
+            const fileName = getDatedFileName();
 
             downloadLink.href = url;
-            downloadLink.download = fileName; // Menggunakan nama file timestamp
+            downloadLink.download = fileName;
             downloadLink.textContent = `Unduh JSON Gabungan (${fileName})`;
+
             downloadLink.style.display = 'block';
 
             console.log(`Berhasil menggabungkan ${finalJsonArray.length} record.`);
 
+            showNotification('Data berhasil digabungkan!', 'success');
+
         } catch (error) {
-            outputElement.textContent = `Terjadi Kesalahan Kritis: ${error}`;
+            outputElement.textContent = `Terjadi Kesalahan Kritis: ${error.message}`;
             downloadLink.style.display = 'none';
+
+            showNotification('Gagal memproses data!', 'error');
         }
     }
 </script>
