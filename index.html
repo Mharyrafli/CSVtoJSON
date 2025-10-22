@@ -10,14 +10,14 @@
   body {
     font-family: 'Inter', sans-serif;
   }
-  #outputContainer::-webkit-scrollbar {
+  #modalOutputContainer::-webkit-scrollbar {
     width: 8px;
   }
-  #outputContainer::-webkit-scrollbar-thumb {
-    background-color: #4f46e5;
+  #modalOutputContainer::-webkit-scrollbar-thumb {
+    background-color: #6366f1;
     border-radius: 4px;
   }
-  #outputContainer::-webkit-scrollbar-track {
+  #modalOutputContainer::-webkit-scrollbar-track {
     background: #1f2937;
     border-radius: 4px;
   }
@@ -34,55 +34,82 @@
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
   }
+
+  .modal {
+    transition: opacity 0.3s ease-in-out;
+  }
+  .modal.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .modal-overlay {
+    background-color: rgba(0, 0, 0, 0.8);
+  }
 </style>
 </head>
-<body class="bg-gray-50 p-4 min-h-screen flex flex-col pb-16">
+<body class="bg-gray-900 text-gray-100 p-4 min-h-screen flex flex-col pb-16">
 
-<h2 class="text-3xl md:text-4xl font-extrabold text-indigo-700 text-center mb-8 mt-4 tracking-tight">
+<h2 class="text-3xl md:text-4xl font-extrabold text-indigo-400 text-center mb-8 mt-4 tracking-tight">
   CSV TO JSON
 </h2>
 
-<div class="card bg-white p-6 md:p-8 max-w-lg mx-auto rounded-xl shadow-2xl transition duration-300 hover:shadow-3xl border border-gray-200 w-full">
+<div class="card bg-gray-800 p-6 md:p-8 max-w-lg mx-auto rounded-xl shadow-2xl transition duration-300 hover:shadow-xl border border-gray-700 w-full">
   
-  <p class="text-lg font-semibold text-gray-800 mb-4">
-    <span class="text-indigo-600 mr-2">1.</span> Unggah Berkas CSV
+  <p class="text-lg font-semibold text-gray-200 mb-4">
+    <span class="text-indigo-400 mr-2">1.</span> Unggah Berkas CSV
   </p>
   
-  <div class="file-list bg-indigo-50 p-4 rounded-lg border-l-4 border-indigo-500 mb-6 text-sm text-gray-700">
+  <div class="file-list bg-indigo-900/30 p-4 rounded-lg border-l-4 border-indigo-400 mb-6 text-sm text-gray-300">
     <ul class="list-disc list-inside space-y-1 ml-2">
-      <li class="font-mono text-gray-600">UGD_BARCODE.CSV</li>
-      <li class="font-mono text-gray-600">UGD_PRODMAST.CSV</li>
-      <li class="font-mono text-gray-600">UGD_RAK.CSV</li>
+      <li class="font-mono text-gray-400">UGD_BARCODE.CSV</li>
+      <li class="font-mono text-gray-400">UGD_PRODMAST.CSV</li>
+      <li class="font-mono text-gray-400">UGD_RAK.CSV</li>
     </ul>
   </div>
   
-  <input type="file" id="csvFiles" multiple class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition duration-150 mb-6">
+  <input type="file" id="csvFiles" multiple class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-700 file:text-white hover:file:bg-indigo-600 transition duration-150 mb-6">
   
-  <button id="convertBtn" onclick="convertCSVtoJSON()" class="w-full py-3 px-6 text-white font-bold rounded-xl bg-gradient-to-r from-indigo-600 to-blue-500 hover:from-indigo-700 hover:to-blue-600 shadow-lg hover:shadow-xl transform transition duration-200 hover:scale-[1.01] flex items-center justify-center">
+  <button id="convertBtn" onclick="convertCSVtoJSON()" class="w-full py-3 px-6 text-white font-bold rounded-xl bg-gradient-to-r from-indigo-500 to-blue-400 hover:from-indigo-600 hover:to-blue-500 shadow-lg hover:shadow-xl transform transition duration-200 hover:scale-[1.01] flex items-center justify-center">
     <span id="buttonText">Konversi ke JSON</span>
     <div id="loadingSpinner" class="spinner hidden"></div>
   </button>
 </div>
 
-<div class="max-w-4xl mx-auto w-full mt-6">
-  <h3 class="text-xl font-semibold text-gray-800 mb-3 text-center">
-    <span class="text-indigo-600 mr-2">2.</span> Hasil JSON:
-  </h3>
-  <div id="outputContainer" class="bg-gray-900 text-green-300 p-4 rounded-xl border-4 border-white-700 shadow-inner overflow-y-auto font-mono text-sm max-h-96 min-h-24 w-full">
-    <pre id="output" class="whitespace-pre-wrap"></pre>
-    <p id="placeholderText" class="text-gray-500 text-center mt-8">Hasil JSON akan muncul di sini setelah konversi.</p>
-  </div>
-  
-  <div class="text-center mt-6">
-    <button id="downloadBtn" onclick="downloadJSON()" class="py-3 px-8 text-white font-bold rounded-xl bg-green-500 hover:bg-green-600 shadow-md hover:shadow-lg transform transition duration-200 hover:scale-[1.05] hidden">
-      Download JSON
-    </button>
-  </div>
+<div class="max-w-4xl mx-auto w-full mt-6 text-center">
+    <p id="mainStatus" class="text-sm text-gray-400 italic">Siap untuk konversi.</p>
 </div>
 
-<footer class="fixed bottom-0 left-0 w-full bg-indigo-50 text-indigo-700 text-xs py-3 text-center border-t border-indigo-200 shadow-inner">
+<footer class="fixed bottom-0 left-0 w-full bg-gray-800 text-indigo-400 text-xs py-3 text-center border-t border-gray-700 shadow-xl">
   ~ &copy; Made With 🖤 by M.H.R ~
 </footer>
+
+<div id="jsonModal" class="modal hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="modal-overlay absolute inset-0"></div>
+    
+    <div class="modal-content bg-gray-800 p-6 md:p-8 rounded-xl shadow-2xl max-w-4xl w-full z-10 border-4 border-indigo-500/50 transform transition duration-300 scale-100">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-gray-100">
+                Hasil Konversi JSON
+            </h3>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-100 transition duration-150">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        
+        <div id="modalOutputContainer" class="bg-gray-900 text-green-400 p-4 rounded-lg overflow-y-auto font-mono text-xs md:text-sm max-h-[70vh] min-h-[100px] w-full">
+            <pre id="output" class="whitespace-pre-wrap"></pre>
+        </div>
+        
+        <div class="text-center mt-6">
+            <button id="downloadBtn" onclick="downloadJSON()" class="py-2.5 px-6 text-white font-bold rounded-xl bg-green-600 hover:bg-green-700 shadow-md hover:shadow-lg transform transition duration-200 hover:scale-[1.03]">
+              Download JSON
+            </button>
+            <button onclick="closeModal()" class="ml-4 py-2.5 px-6 text-gray-800 font-bold rounded-xl bg-gray-300 hover:bg-gray-400 transition duration-150">
+                Tutup
+            </button>
+        </div>
+    </div>
+</div>
 
 <script>
 let jsonResult = [];
@@ -108,20 +135,41 @@ function setButtonState(isLoading) {
     }
 }
 
-function showMessage(message, isError = false) {
+function showStatus(message, isError = false) {
+    const status = getElement('mainStatus');
+    status.textContent = message;
+
+    if (isError) {
+        status.classList.remove('text-gray-400', 'text-green-400');
+        status.classList.add('text-red-400', 'font-bold');
+    } else {
+        status.classList.remove('text-red-400', 'font-bold');
+        status.classList.add('text-gray-400');
+    }
+}
+
+function showModal(jsonText, isError = false) {
+    const modal = getElement('jsonModal');
     const output = getElement('output');
-    const placeholder = getElement('placeholderText');
-    
-    placeholder.classList.add('hidden');
-    output.textContent = message;
+    const downloadBtn = getElement('downloadBtn');
+
+    output.textContent = jsonText;
     
     if (isError) {
-        output.classList.remove('text-green-300');
+        output.classList.remove('text-green-400');
         output.classList.add('text-red-400');
+        downloadBtn.classList.add('hidden');
     } else {
         output.classList.remove('text-red-400');
-        output.classList.add('text-green-300');
+        output.classList.add('text-green-400');
+        downloadBtn.classList.remove('hidden');
     }
+
+    modal.classList.remove('hidden');
+}
+
+function closeModal() {
+    getElement('jsonModal').classList.add('hidden');
 }
 
 function readCSV(file) {
@@ -130,7 +178,7 @@ function readCSV(file) {
         reader.onload = e => {
             try {
                 const text = e.target.result;
-                const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
+                const lines = text.split(/\r?\n/).filter(l => l.trim() !== ''); 
                 if (lines.length === 0) {
                     throw new Error(`File ${file.name} kosong.`);
                 }
@@ -160,16 +208,14 @@ function readCSV(file) {
 
 async function convertCSVtoJSON() {
     jsonResult = [];
-    getElement('downloadBtn').classList.add('hidden');
-    getElement('placeholderText').classList.add('hidden');
-    getElement('output').textContent = '';
-    
+    closeModal();
+
     setButtonState(true);
-    showMessage('Memulai konversi...', false);
+    showStatus('Memulai konversi...', false);
 
     const files = getElement('csvFiles').files;
     if (!files || files.length < 3) {
-        showMessage("ERROR: Harap unggah semua 3 file CSV yang diperlukan!", true);
+        showStatus("ERROR: Harap unggah semua 3 file CSV yang diperlukan!", true);
         setButtonState(false);
         return;
     }
@@ -183,20 +229,20 @@ async function convertCSVtoJSON() {
     }
 
     if (!fileBarcode || !fileProdmast || !fileRak) {
-        showMessage("ERROR: File CSV tidak lengkap atau nama file tidak sesuai! Pastikan ada UGD_BARCODE, UGD_PRODMAST, dan UGD_RAK.", true);
+        showStatus("ERROR: File CSV tidak lengkap atau nama file tidak sesuai! Pastikan ada UGD_BARCODE, UGD_PRODMAST, dan UGD_RAK.", true);
         setButtonState(false);
         return;
     }
 
     try {
-        showMessage('Membaca file UGD_BARCODE.CSV...', false);
+        showStatus('Membaca file UGD_BARCODE.CSV...', false);
         const barcodeData = await readCSV(fileBarcode);
-        showMessage('Membaca file UGD_PRODMAST.CSV...', false);
+        showStatus('Membaca file UGD_PRODMAST.CSV...', false);
         const prodmastData = await readCSV(fileProdmast);
-        showMessage('Membaca file UGD_RAK.CSV...', false);
+        showStatus('Membaca file UGD_RAK.CSV...', false);
         const rakData = await readCSV(fileRak);
         
-        showMessage('Memproses data...', false);
+        showStatus('Memproses data...', false);
 
         let barcodeMap = {};
         barcodeData.forEach(row => {
@@ -245,15 +291,14 @@ async function convertCSVtoJSON() {
         });
 
         jsonResult = result;
-        getElement('output').textContent = JSON.stringify(result, null, 2);
-        getElement('downloadBtn').classList.remove('hidden');
-        
-        getElement('output').classList.remove('text-red-400');
-        getElement('output').classList.add('text-green-300');
+        showModal(JSON.stringify(result, null, 2), false);
+        showStatus('Konversi Berhasil! Hasil ditampilkan dalam pop-up.', false);
 
     } catch (error) {
         console.error("Konversi gagal:", error);
-        showMessage(`ERROR: Gagal dalam pemrosesan data. Detail: ${error.message}`, true);
+        const errorMessage = `ERROR: Gagal dalam pemrosesan data. Detail: ${error.message}`;
+        showStatus(errorMessage, true);
+        showModal(errorMessage, true);
     } finally {
         setButtonState(false);
     }
@@ -261,7 +306,7 @@ async function convertCSVtoJSON() {
 
 function downloadJSON() {
     if (jsonResult.length === 0) {
-        showMessage("ERROR: Tidak ada data JSON untuk diunduh.", true);
+        showStatus("ERROR: Tidak ada data JSON untuk diunduh.", true);
         return;
     }
 
@@ -277,9 +322,10 @@ function downloadJSON() {
     link.download = filename;
     link.href = URL.createObjectURL(blob);
     link.click();
+    closeModal();
+    showStatus('JSON berhasil diunduh.', false);
 }
 </script>
 
 </body>
 </html>
-
