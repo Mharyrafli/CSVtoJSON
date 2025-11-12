@@ -1,26 +1,74 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CSV TO JSON</title>
+<title>CSV TO JSON Converter</title>
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+  :root {
+      font-family: 'Inter', sans-serif;
+  }
+  
+  #matrix-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: #000; 
+      z-index: 0;
+  }
+
   body {
-    font-family: 'Inter', sans-serif;
+      background-color: #000; 
   }
-  #modalOutputContainer::-webkit-scrollbar {
-    width: 8px;
+  
+  .main-content {
+      z-index: 10;
+      position: relative;
   }
-  #modalOutputContainer::-webkit-scrollbar-thumb {
-    background-color: #6366f1;
-    border-radius: 4px;
+  
+  .header-title {
+      background-image: linear-gradient(to right, #ffffff, #e0e0e0); 
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: 0 3px 6px rgba(0, 0, 0, 0.7); 
   }
-  #modalOutputContainer::-webkit-scrollbar-track {
-    background: #1f2937;
-    border-radius: 4px;
+
+  .glass-effect {
+      background-color: rgba(255, 255, 255, 0.05); 
+      backdrop-filter: blur(12px); 
+      border: 1px solid rgba(255, 255, 255, 0.15); 
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4); 
+      transition: all 0.3s ease-in-out;
   }
+  
+  .glass-button-base {
+      backdrop-filter: blur(5px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+      transition: all 0.2s ease-in-out;
+      border-width: 1px; 
+      color: #fff; 
+      font-weight: 600; 
+      border-radius: 0.75rem; 
+  }
+  
+  .glass-emerald {
+      background-color: rgba(6, 175, 120, 0.8); 
+      border-color: #06af78; 
+  }
+  .glass-emerald:hover {
+      background-color: rgba(4, 150, 100, 0.9); 
+      border-color: #049664; 
+  }
+
   .spinner {
     border: 4px solid rgba(255, 255, 255, 0.3);
     border-top: 4px solid #fff;
@@ -28,7 +76,7 @@
     width: 24px;
     height: 24px;
     animation: spin 1s linear infinite;
-    margin: 0 auto;
+    margin-left: 0.5rem;
   }
   @keyframes spin {
     0% { transform: rotate(0deg); }
@@ -43,289 +91,411 @@
     pointer-events: none;
   }
   .modal-overlay {
-    background-color: rgba(0, 0, 0, 0.8);
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
   }
+  
+  .modal-content {
+      background-color: rgba(255, 255, 255, 0.05); 
+      backdrop-filter: blur(15px); 
+      border: 1px solid rgba(255, 255, 255, 0.25); 
+      box-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.5); 
+  }
+  
+  #modalOutputContainer::-webkit-scrollbar {
+    width: 8px;
+  }
+  #modalOutputContainer::-webkit-scrollbar-thumb {
+    background-color: #049664; 
+    border-radius: 4px;
+  }
+  #modalOutputContainer::-webkit-scrollbar-track {
+    background: #1f2937;
+    border-radius: 4px;
+  }
+  
+  .file-list-card {
+      background-color: rgba(6, 175, 120, 0.15); 
+      border-left: 4px solid #06af78; 
+      color: #d1fae5; 
+  }
+  .file-list-card li {
+      color: #a7f3d0; 
+  }
+  
+  .custom-file-input {
+      color: #d1d5db; 
+  }
+  .custom-file-input::-webkit-file-upload-button {
+      background-color: #06af78; 
+      color: white;
+  }
+  .custom-file-input:hover::-webkit-file-upload-button {
+      background-color: #049664; 
+  }
+  
+  footer {
+      z-index: 15; 
+  }
+  
 </style>
 </head>
-<body class="bg-gray-900 text-gray-100 p-4 min-h-screen flex flex-col pb-16">
-
-<h2 class="text-3xl md:text-4xl font-extrabold text-indigo-400 text-center mb-8 mt-4 tracking-tight">
-  CSV TO JSON
-</h2>
-
-<div class="card bg-gray-800 p-6 md:p-8 max-w-lg mx-auto rounded-xl shadow-2xl transition duration-300 hover:shadow-xl border border-gray-700 w-full">
+<body class="min-h-screen flex flex-col items-center pb-16">
   
-  <p class="text-lg font-semibold text-gray-200 mb-4">
-    <span class="text-indigo-400 mr-2">1.</span> Unggah Berkas CSV
-  </p>
-  
-  <div class="file-list bg-indigo-900/30 p-4 rounded-lg border-l-4 border-indigo-400 mb-6 text-sm text-gray-300">
-    <ul class="list-disc list-inside space-y-1 ml-2">
-      <li class="font-mono text-gray-400">UGD_BARCODE.CSV</li>
-      <li class="font-mono text-gray-400">UGD_PRODMAST.CSV</li>
-      <li class="font-mono text-gray-400">UGD_RAK.CSV</li>
-    </ul>
-  </div>
-  
-  <input type="file" id="csvFiles" multiple class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-700 file:text-white hover:file:bg-indigo-600 transition duration-150 mb-6">
-  
-  <button id="convertBtn" onclick="convertCSVtoJSON()" class="w-full py-3 px-6 text-white font-bold rounded-xl bg-gradient-to-r from-indigo-500 to-blue-400 hover:from-indigo-600 hover:to-blue-500 shadow-lg hover:shadow-xl transform transition duration-200 hover:scale-[1.01] flex items-center justify-center">
-    <span id="buttonText">Konversi ke JSON</span>
-    <div id="loadingSpinner" class="spinner hidden"></div>
-  </button>
-</div>
+    <canvas id="matrix-canvas"></canvas>
 
-<div class="max-w-4xl mx-auto w-full mt-6 text-center">
-    <p id="mainStatus" class="text-sm text-gray-400 italic">Siap untuk konversi.</p>
-</div>
+    <div class="main-content w-full max-w-xl lg:max-w-3xl flex flex-col items-center px-4 sm:px-8 pt-4 sm:pt-6 pb-4 sm:pb-6">
 
-<footer class="fixed bottom-0 left-0 w-full bg-gray-800 text-indigo-400 text-xs py-3 text-center border-t border-gray-700 shadow-xl">
-  ~ &copy; Made With 🖤 by M.H.R ~
-</footer>
+        <h2 class="header-title text-3xl md:text-4xl font-extrabold text-center mb-8 mt-4 tracking-tight">
+          CSV TO JSON CONVERTER
+        </h2>
 
-<div id="jsonModal" class="modal hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-    <div class="modal-overlay absolute inset-0"></div>
-    
-    <div class="modal-content bg-gray-800 p-6 md:p-8 rounded-xl shadow-2xl max-w-4xl w-full z-10 border-4 border-indigo-500/50 transform transition duration-300 scale-100">
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="text-xl font-bold text-gray-100">
-                Hasil Konversi JSON
-            </h3>
-            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-100 transition duration-150">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-            </button>
+        <div class="glass-effect p-6 md:p-8 max-w-lg mx-auto rounded-2xl border-emerald-500 w-full">
+          
+          <p class="text-lg font-semibold text-gray-200 mb-4 flex items-center">
+            <i data-lucide="upload-cloud" class="w-5 h-5 text-emerald-400 mr-2"></i>
+            <span>Unggah Berkas CSV ( 3 File )</span>
+          </p>
+          
+          <div class="file-list-card p-4 rounded-lg mb-6 text-sm">
+            <ul class="list-disc list-inside space-y-1 ml-2">
+              <li>UGD_BARCODE.CSV</li>
+              <li>UGD_PRODMAST.CSV</li>
+              <li>UGD_RAK.CSV</li>
+            </ul>
+          </div>
+          
+          <input type="file" id="csvFiles" multiple class="w-full text-sm custom-file-input file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-emerald-600 file:text-white hover:file:bg-emerald-500 transition duration-150 mb-6">
+          
+          <button id="convertBtn" onclick="convertCSVtoJSON()" 
+              class="w-full glass-button-base glass-emerald py-3 px-6 shadow-lg hover:shadow-xl transform transition duration-200 hover:scale-[1.005] active:scale-[0.99] flex items-center justify-center space-x-2 focus:ring-4 focus:ring-emerald-300 focus:ring-offset-2">
+            <i data-lucide="zap" class="h-5 w-5"></i>
+            <span id="buttonText">Konversi ke JSON</span>
+            <div id="loadingSpinner" class="spinner hidden"></div>
+          </button>
         </div>
-        
-        <div id="modalOutputContainer" class="bg-gray-900 text-green-400 p-4 rounded-lg overflow-y-auto font-mono text-xs md:text-sm max-h-[70vh] min-h-[100px] w-full">
-            <pre id="output" class="whitespace-pre-wrap"></pre>
-        </div>
-        
-        <div class="text-center mt-6">
-            <button id="downloadBtn" onclick="downloadJSON()" class="py-2.5 px-6 text-white font-bold rounded-xl bg-green-600 hover:bg-green-700 shadow-md hover:shadow-lg transform transition duration-200 hover:scale-[1.03]">
-              Download JSON
-            </button>
-            <button onclick="closeModal()" class="ml-4 py-2.5 px-6 text-gray-800 font-bold rounded-xl bg-gray-300 hover:bg-gray-400 transition duration-150">
-                Tutup
-            </button>
+
+        <div class="max-w-4xl mx-auto w-full mt-6 text-center">
+            <p id="mainStatus" class="text-sm text-gray-400 italic">Siap untuk konversi.</p>
         </div>
     </div>
-</div>
 
-<script>
-let jsonResult = [];
+    <footer class="fixed bottom-0 left-0 w-full bg-gray-900 text-emerald-400 text-xs py-3 text-center border-t border-gray-700 shadow-xl">
+      ~ &copy; Made With 🖤 By M.H.R ~
+    </footer>
 
-function getElement(id) {
-    return document.getElementById(id);
-}
-
-function setButtonState(isLoading) {
-    const btn = getElement('convertBtn');
-    const text = getElement('buttonText');
-    const spinner = getElement('loadingSpinner');
-    
-    btn.disabled = isLoading;
-    if (isLoading) {
-        text.textContent = 'Memproses...';
-        spinner.classList.remove('hidden');
-        btn.classList.add('opacity-70', 'cursor-not-allowed');
-    } else {
-        text.textContent = 'Konversi ke JSON';
-        spinner.classList.add('hidden');
-        btn.classList.remove('opacity-70', 'cursor-not-allowed');
-    }
-}
-
-function showStatus(message, isError = false) {
-    const status = getElement('mainStatus');
-    status.textContent = message;
-
-    if (isError) {
-        status.classList.remove('text-gray-400', 'text-green-400');
-        status.classList.add('text-red-400', 'font-bold');
-    } else {
-        status.classList.remove('text-red-400', 'font-bold');
-        status.classList.add('text-gray-400');
-    }
-}
-
-function showModal(jsonText, isError = false) {
-    const modal = getElement('jsonModal');
-    const output = getElement('output');
-    const downloadBtn = getElement('downloadBtn');
-
-    output.textContent = jsonText;
-    
-    if (isError) {
-        output.classList.remove('text-green-400');
-        output.classList.add('text-red-400');
-        downloadBtn.classList.add('hidden');
-    } else {
-        output.classList.remove('text-red-400');
-        output.classList.add('text-green-400');
-        downloadBtn.classList.remove('hidden');
-    }
-
-    modal.classList.remove('hidden');
-}
-
-function closeModal() {
-    getElement('jsonModal').classList.add('hidden');
-}
-
-function readCSV(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = e => {
-            try {
-                const text = e.target.result;
-                const lines = text.split(/\r?\n/).filter(l => l.trim() !== ''); 
-                if (lines.length === 0) {
-                    throw new Error(`File ${file.name} kosong.`);
-                }
-                const headers = lines[0].split('|').map(h => h.trim());
-                
-                if (headers.some(h => !h)) {
-                    throw new Error(`Header file ${file.name} tidak valid. Pastikan menggunakan pemisah '|'.`);
-                }
-
-                const data = lines.slice(1).map(line => {
-                    const values = line.split('|').map(v => v.trim());
-                    let obj = {};
-                    for (let i = 0; i < Math.min(headers.length, values.length); i++) {
-                        obj[headers[i]] = values[i];
-                    }
-                    return obj;
-                });
-                resolve(data);
-            } catch (error) {
-                reject(error);
-            }
-        };
-        reader.onerror = () => reject(new Error(`Gagal membaca file: ${file.name}`));
-        reader.readAsText(file);
-    });
-}
-
-async function convertCSVtoJSON() {
-    jsonResult = [];
-    closeModal();
-
-    setButtonState(true);
-    showStatus('Memulai konversi...', false);
-
-    const files = getElement('csvFiles').files;
-    if (!files || files.length < 3) {
-        showStatus("ERROR: Harap unggah semua 3 file CSV yang diperlukan!", true);
-        setButtonState(false);
-        return;
-    }
-
-    let fileBarcode, fileProdmast, fileRak;
-    for (let f of files) {
-        const name = f.name.toLowerCase();
-        if (name.includes('ugd_barcode')) fileBarcode = f;
-        else if (name.includes('ugd_prodmast')) fileProdmast = f;
-        else if (name.includes('ugd_rak')) fileRak = f;
-    }
-
-    if (!fileBarcode || !fileProdmast || !fileRak) {
-        showStatus("ERROR: File CSV tidak lengkap atau nama file tidak sesuai! Pastikan ada UGD_BARCODE, UGD_PRODMAST, dan UGD_RAK.", true);
-        setButtonState(false);
-        return;
-    }
-
-    try {
-        showStatus('Membaca file UGD_BARCODE.CSV...', false);
-        const barcodeData = await readCSV(fileBarcode);
-        showStatus('Membaca file UGD_PRODMAST.CSV...', false);
-        const prodmastData = await readCSV(fileProdmast);
-        showStatus('Membaca file UGD_RAK.CSV...', false);
-        const rakData = await readCSV(fileRak);
+    <div id="jsonModal" class="modal hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="modal-overlay absolute inset-0"></div>
         
-        showStatus('Memproses data...', false);
+        <div class="modal-content p-6 md:p-8 rounded-2xl max-w-4xl w-full z-10">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-100 flex items-center">
+                    <i data-lucide="code" class="w-5 h-5 text-emerald-400 mr-2"></i>
+                    Hasil Konversi JSON
+                </h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-100 transition duration-150 p-1 rounded-full hover:bg-white/10">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            
+            <div id="modalOutputContainer" class="bg-gray-900 text-emerald-400 p-4 rounded-lg overflow-y-auto font-mono text-xs md:text-sm max-h-[70vh] min-h-[100px] w-full border border-gray-700">
+                <pre id="output" class="whitespace-pre-wrap"></pre>
+            </div>
+            
+            <div class="text-center mt-6 flex flex-col justify-center">
+                <button id="downloadBtn" onclick="downloadJSON()" 
+                        class="glass-button-base glass-emerald py-2.5 px-6 shadow-md hover:shadow-lg transform transition duration-200 hover:scale-[1.03] flex items-center justify-center space-x-2 w-full max-w-xs mx-auto">
+                  <i data-lucide="download" class="w-5 h-5"></i>
+                  <span>Download JSON</span>
+                </button>
+            </div>
+        </div>
+    </div>
 
-        let barcodeMap = {};
-        barcodeData.forEach(row => {
-            const plu = row.PLU ? row.PLU.trim() : null;
-            const barcd = row.BARCD ? row.BARCD.trim() : null;
-            if (plu && barcd) {
-                if (!barcodeMap[plu]) barcodeMap[plu] = [];
-                if (!barcodeMap[plu].includes(barcd)) {
-                    barcodeMap[plu].push(barcd);
-                }
+    <script>
+    let jsonResult = [];
+
+    const canvas = document.getElementById('matrix-canvas');
+    const ctx = canvas.getContext('2d');
+
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+
+    const characters = '01x';
+    const font_size = 14; 
+    let columns = Math.floor(width / font_size);
+    const drops = [];
+
+    for (let i = 0; i < columns; i++) {
+        drops[i] = 1; 
+    }
+
+    function drawMatrix() {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.04)'; 
+        ctx.fillRect(0, 0, width, height);
+
+        ctx.fillStyle = '#0C6'; 
+        ctx.font = font_size + 'px monospace';
+
+        for (let i = 0; i < drops.length; i++) {
+            const text = characters[Math.floor(Math.random() * characters.length)];
+            
+            const x = i * font_size;
+            const y = drops[i] * font_size;
+            ctx.fillText(text, x, y);
+
+            if (drops[i] * font_size > height && Math.random() > 0.975) {
+                drops[i] = 0;
             }
-        });
 
-        let result = [];
-        prodmastData.forEach(prod => {
-            const plu = prod.PLUMD ? prod.PLUMD.trim() : null;
-            if (!plu) return;
+            drops[i]++;
+        }
+    }
+    
+    window.addEventListener('resize', () => {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+        columns = Math.floor(width / font_size);
+        drops.length = columns; 
+        for (let i = 0; i < columns; i++) {
+            if (drops[i] === undefined) {
+                drops[i] = 1;
+            }
+        }
+    });
 
-            const barcdList = barcodeMap[plu] || [];
-            const rakList = rakData.filter(r => (r.PLUMD ? r.PLUMD.trim() : null) === plu);
+    setInterval(drawMatrix, 50); 
 
-            const baseEntry = {
-                PLU: plu,
-                DESC2: prod.DESC2 ? prod.DESC2.trim() : null,
-                PRICE: prod.PRICE ? prod.PRICE.trim() : null,
-                BARCD: barcdList,
-            };
 
-            if (rakList.length > 0) {
-                rakList.forEach(rak => {
-                    result.push({
-                        ...baseEntry,
-                        NAMA_RAK: rak.NAMA_RAK ? rak.NAMA_RAK.trim() : null,
-                        NOSHELF: rak.NOSHELF ? rak.NOSHELF.trim() : null,
-                        KIRIKANAN: rak.KIRIKANAN ? rak.KIRIKANAN.trim() : null
+    document.addEventListener('DOMContentLoaded', () => {
+        lucide.createIcons();
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+        columns = Math.floor(width / font_size);
+        if(drops.length < columns) {
+            for (let i = drops.length; i < columns; i++) {
+               drops[i] = 1; 
+            }
+        }
+    });
+
+    function getElement(id) {
+        return document.getElementById(id);
+    }
+
+    function setButtonState(isLoading) {
+        const btn = getElement('convertBtn');
+        const text = getElement('buttonText');
+        const spinner = getElement('loadingSpinner');
+        
+        btn.disabled = isLoading;
+        if (isLoading) {
+            text.textContent = 'Memproses...';
+            spinner.classList.remove('hidden');
+            btn.classList.add('opacity-70', 'cursor-not-allowed');
+        } else {
+            text.textContent = 'Konversi ke JSON';
+            spinner.classList.add('hidden');
+            btn.classList.remove('opacity-70', 'cursor-not-allowed');
+        }
+    }
+
+    function showStatus(message, isError = false) {
+        const status = getElement('mainStatus');
+        status.textContent = message;
+
+        if (isError) {
+            status.classList.remove('text-gray-400');
+            status.classList.add('text-red-400', 'font-bold');
+        } else {
+            status.classList.remove('text-red-400', 'font-bold');
+            status.classList.add('text-gray-400');
+        }
+    }
+
+    function showModal(jsonText, isError = false) {
+        const modal = getElement('jsonModal');
+        const output = getElement('output');
+        const downloadBtn = getElement('downloadBtn');
+
+        output.textContent = jsonText;
+        
+        if (isError) {
+            output.classList.remove('text-emerald-400');
+            output.classList.add('text-red-400');
+            downloadBtn.classList.add('hidden');
+        } else {
+            output.classList.remove('text-red-400');
+            output.classList.add('text-emerald-400');
+            downloadBtn.classList.remove('hidden');
+        }
+
+        modal.classList.remove('hidden');
+    }
+
+    function closeModal() {
+        getElement('jsonModal').classList.add('hidden');
+    }
+
+    function readCSV(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = e => {
+                try {
+                    const text = e.target.result;
+                    const lines = text.split(/\r?\n/).filter(l => l.trim() !== ''); 
+                    if (lines.length === 0) {
+                        throw new Error(`File ${file.name} kosong.`);
+                    }
+                    const headers = lines[0].split('|').map(h => h.trim());
+                    
+                    if (headers.some(h => !h)) {
+                        throw new Error(`Header file ${file.name} tidak valid. Pastikan menggunakan pemisah '|'.`);
+                    }
+
+                    const data = lines.slice(1).map(line => {
+                        const values = line.split('|').map(v => v.trim());
+                        let obj = {};
+                        for (let i = 0; i < Math.min(headers.length, values.length); i++) {
+                            obj[headers[i]] = values[i];
+                        }
+                        return obj;
                     });
-                });
-            } else {
-                result.push({
-                    ...baseEntry,
-                    NAMA_RAK: null,
-                    NOSHELF: null,
-                    KIRIKANAN: null
-                });
-            }
+                    resolve(data);
+                } catch (error) {
+                    reject(error);
+                }
+            };
+            reader.onerror = () => reject(new Error(`Gagal membaca file: ${file.name}`));
+            reader.readAsText(file);
         });
-
-        jsonResult = result;
-        showModal(JSON.stringify(result, null, 2), false);
-        showStatus('Konversi Berhasil! Hasil ditampilkan dalam pop-up.', false);
-
-    } catch (error) {
-        console.error("Konversi gagal:", error);
-        const errorMessage = `ERROR: Gagal dalam pemrosesan data. Detail: ${error.message}`;
-        showStatus(errorMessage, true);
-        showModal(errorMessage, true);
-    } finally {
-        setButtonState(false);
-    }
-}
-
-function downloadJSON() {
-    if (jsonResult.length === 0) {
-        showStatus("ERROR: Tidak ada data JSON untuk diunduh.", true);
-        return;
     }
 
-    const blob = new Blob([JSON.stringify(jsonResult, null, 2)], {type: "application/json"});
-    const link = document.createElement("a");
+    async function convertCSVtoJSON() {
+        jsonResult = [];
+        closeModal();
 
-    const today = new Date();
-    const day = String(today.getDate()).padStart(2,'0');
-    const month = String(today.getMonth()+1).padStart(2,'0');
-    const year = today.getFullYear();
-    const filename = `${day}-${month}-${year}.json`;
+        setButtonState(true);
+        showStatus('Memulai konversi...', false);
 
-    link.download = filename;
-    link.href = URL.createObjectURL(blob);
-    link.click();
-    closeModal();
-    showStatus('JSON berhasil diunduh.', false);
-}
-</script>
+        const files = getElement('csvFiles').files;
+        if (!files || files.length < 3) {
+            showStatus("ERROR: Harap unggah semua 3 file CSV yang diperlukan!", true);
+            setButtonState(false);
+            return;
+        }
+
+        let fileBarcode, fileProdmast, fileRak;
+        for (let f of files) {
+            const name = f.name.toLowerCase();
+            if (name.includes('ugd_barcode')) fileBarcode = f;
+            else if (name.includes('ugd_prodmast')) fileProdmast = f;
+            else if (name.includes('ugd_rak')) fileRak = f;
+        }
+
+        if (!fileBarcode || !fileProdmast || !fileRak) {
+            showStatus("ERROR: File CSV tidak lengkap atau nama file tidak sesuai! Pastikan ada UGD_BARCODE, UGD_PRODMAST, dan UGD_RAK.", true);
+            setButtonState(false);
+            return;
+        }
+
+        try {
+            showStatus('Membaca file UGD_BARCODE.CSV...', false);
+            const barcodeData = await readCSV(fileBarcode);
+            showStatus('Membaca file UGD_PRODMAST.CSV...', false);
+            const prodmastData = await readCSV(fileProdmast);
+            showStatus('Membaca file UGD_RAK.CSV...', false);
+            const rakData = await readCSV(fileRak);
+            
+            showStatus('Memproses dan menggabungkan data ...', false);
+
+            let barcodeMap = {};
+            barcodeData.forEach(row => {
+                const plu = row.PLU ? row.PLU.trim() : null;
+                const barcd = row.BARCD ? row.BARCD.trim() : null;
+                if (plu && barcd) {
+                    if (!barcodeMap[plu]) barcodeMap[plu] = [];
+                    if (!barcodeMap[plu].includes(barcd)) {
+                        barcodeMap[plu].push(barcd);
+                    }
+                }
+            });
+
+            await new Promise(resolve => {
+                setTimeout(() => {
+                    let result = [];
+                    prodmastData.forEach(prod => {
+                        const plu = prod.PLUMD ? prod.PLUMD.trim() : null;
+                        if (!plu) return;
+
+                        const barcdList = barcodeMap[plu] || [];
+                        const rakList = rakData.filter(r => (r.PLUMD ? r.PLUMD.trim() : null) === plu);
+
+                        const baseEntry = {
+                            PLU: plu,
+                            DESC2: prod.DESC2 ? prod.DESC2.trim() : null,
+                            PRICE: prod.PRICE ? prod.PRICE.trim() : null,
+                            BARCD: barcdList,
+                        };
+
+                        if (rakList.length > 0) {
+                            rakList.forEach(rak => {
+                                result.push({
+                                    ...baseEntry,
+                                    NAMA_RAK: rak.NAMA_RAK ? rak.NAMA_RAK.trim() : null,
+                                    NOSHELF: rak.NOSHELF ? rak.NOSHELF.trim() : null,
+                                    KIRIKANAN: rak.KIRIKANAN ? rak.KIRIKANAN.trim() : null
+                                });
+                            });
+                        } else {
+                            result.push({
+                                ...baseEntry,
+                                NAMA_RAK: null,
+                                NOSHELF: null,
+                                KIRIKANAN: null
+                            });
+                        }
+                    });
+                    jsonResult = result;
+                    resolve();
+                }, 10); 
+            });
+
+
+            showModal(JSON.stringify(jsonResult, null, 2), false);
+            showStatus('Konversi Berhasil! Hasil ditampilkan dalam pop-up.', false);
+
+        } catch (error) {
+            const errorMessage = `ERROR: Gagal dalam pemrosesan data. Detail: ${error.message}`;
+            showStatus(errorMessage, true);
+            showModal(errorMessage, true);
+        } finally {
+            setButtonState(false);
+        }
+    }
+
+    function downloadJSON() {
+        if (jsonResult.length === 0) {
+            showStatus("ERROR: Tidak ada data JSON untuk diunduh.", true);
+            return;
+        }
+
+        const blob = new Blob([JSON.stringify(jsonResult, null, 2)], {type: "application/json"});
+        const link = document.createElement("a");
+
+        const today = new Date();
+        const day = String(today.getDate()).padStart(2,'0');
+        const month = String(today.getMonth()+1).padStart(2,'0');
+        const year = today.getFullYear();
+        const filename = `${day}-${month}-${year}.json`;
+
+        link.download = filename;
+        link.href = URL.createObjectURL(blob);
+        link.click();
+        closeModal();
+        showStatus('JSON berhasil diunduh.', false);
+    }
+    </script>
 
 </body>
 </html>
