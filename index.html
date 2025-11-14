@@ -154,7 +154,7 @@
           
           <p class="text-lg font-semibold text-gray-200 mb-4 flex items-center">
             <i data-lucide="upload-cloud" class="w-5 h-5 text-emerald-400 mr-2"></i>
-            <span>Unggah Berkas CSV ( 4 File )</span>
+            <span>Unggah Berkas CSV ( 3 File )</span>
           </p>
           
           <div class="file-list-card p-4 rounded-lg mb-6 text-sm">
@@ -162,7 +162,6 @@
               <li>UGD_BARCODE.CSV</li>
               <li>UGD_PRODMAST.CSV</li>
               <li>UGD_RAK.CSV</li>
-              <li>UGD_promo_matriks.CSV</li>
             </ul>
           </div>
           
@@ -372,12 +371,6 @@
         });
     }
     
-    function extractPLU(itemSyaratori) {
-        if (!itemSyaratori) return null;
-        const match = itemSyaratori.match(/PLU=(\d+)/i);
-        return match ? match[1].trim() : null;
-    }
-
     async function convertCSVtoJSON() {
         jsonResult = [];
         closeModal();
@@ -386,23 +379,22 @@
         showStatus('Memulai konversi...', false);
 
         const files = getElement('csvFiles').files;
-        if (!files || files.length < 4) {
-            showStatus("ERROR: Harap unggah semua 4 file CSV yang diperlukan!", true);
+        if (!files || files.length < 3) {
+            showStatus("ERROR: Harap unggah semua 3 file CSV yang diperlukan! (UGD_BARCODE, UGD_PRODMAST, UGD_RAK)", true);
             setButtonState(false);
             return;
         }
 
-        let fileBarcode, fileProdmast, fileRak, filePromo;
+        let fileBarcode, fileProdmast, fileRak;
         for (let f of files) {
             const name = f.name.toLowerCase();
             if (name.includes('ugd_barcode')) fileBarcode = f;
             else if (name.includes('ugd_prodmast')) fileProdmast = f;
             else if (name.includes('ugd_rak')) fileRak = f;
-            else if (name.includes('ugd_promo_matriks')) filePromo = f; 
         }
 
-        if (!fileBarcode || !fileProdmast || !fileRak || !filePromo) {
-            showStatus("ERROR: File CSV tidak lengkap atau nama file tidak sesuai! Pastikan ada UGD_BARCODE, UGD_PRODMAST, UGD_RAK, dan UGD_promo_matriks.", true);
+        if (!fileBarcode || !fileProdmast || !fileRak) {
+            showStatus("ERROR: File CSV tidak lengkap atau nama file tidak sesuai! Pastikan ada UGD_BARCODE, UGD_PRODMAST, dan UGD_RAK.", true);
             setButtonState(false);
             return;
         }
@@ -414,8 +406,6 @@
             const prodmastData = await readCSV(fileProdmast);
             showStatus('Membaca file UGD_RAK.CSV...', false);
             const rakData = await readCSV(fileRak);
-            showStatus('Membaca file UGD_promo_matriks.CSV...', false);
-            const promoData = await readCSV(filePromo);
             
             showStatus('Memproses dan menggabungkan data ...', false);
 
@@ -430,23 +420,6 @@
                     }
                 }
             });
-            
-            let promoMap = {};
-            promoData.forEach(row => {
-                const pluFromSyaratori = extractPLU(row.ITEMSYARATORI); 
-                
-                if (pluFromSyaratori) {
-                    const promoEntry = {
-                        MEKANISME: row.MEKANISME ? row.MEKANISME.trim() : null,
-                        TANGGALAWAL: row.TANGGALAWAL ? row.TANGGALAWAL.trim() : null,
-                        TANGGALAKHIR: row.TANGGALAKHIR ? row.TANGGALAKHIR.trim() : null,
-                    };
-                    
-                    if (!promoMap[pluFromSyaratori]) promoMap[pluFromSyaratori] = [];
-                    promoMap[pluFromSyaratori].push(promoEntry);
-                }
-            });
-
 
             await new Promise(resolve => {
                 setTimeout(() => {
@@ -457,14 +430,12 @@
 
                         const barcdList = barcodeMap[plu] || [];
                         const rakList = rakData.filter(r => (r.PLUMD ? r.PLUMD.trim() : null) === plu);
-                        const promoList = promoMap[plu] || []; 
-
+                        
                         const baseEntry = {
                             PLU: plu,
                             DESC2: prod.DESC2 ? prod.DESC2.trim() : null,
                             PRICE: prod.PRICE ? prod.PRICE.trim() : null,
                             BARCD: barcdList,
-                            PROMO: promoList.length > 0 ? promoList : null, 
                         };
 
                         if (rakList.length > 0) {
