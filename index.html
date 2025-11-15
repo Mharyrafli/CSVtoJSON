@@ -3,80 +3,99 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CSV TO JSON Converter</title>
+<title>CONVERT CSV</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/lucide@latest"></script>
-
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-
 <style>
   :root {
       font-family: 'Inter', sans-serif;
   }
   
-  #matrix-canvas {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      display: block;
-      background: #000; 
-      z-index: 0;
-  }
-
   body {
-      background-color: #000; 
+      background-color: #0d1117;
+      color: #c9d1d9;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 1rem;
+      padding-bottom: 5rem;
   }
   
-  .main-content {
-      z-index: 10;
-      position: relative;
-  }
-  
-  .header-title {
-      background-image: linear-gradient(to right, #ffffff, #e0e0e0); 
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      text-shadow: 0 3px 6px rgba(0, 0, 0, 0.7); 
-  }
-
-  .glass-effect {
-      background-color: rgba(255, 255, 255, 0.05); 
-      backdrop-filter: blur(12px); 
-      border: 1px solid rgba(255, 255, 255, 0.15); 
-      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4); 
+  .glass-card {
+      background-color: rgba(22, 27, 34, 0.8);
+      backdrop-filter: blur(10px); 
+      border: 1px solid #30363d;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5); 
       transition: all 0.3s ease-in-out;
   }
-  
-  .glass-button-base {
-      backdrop-filter: blur(5px);
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
-      transition: all 0.2s ease-in-out;
-      border-width: 1px; 
-      color: #fff; 
-      font-weight: 600; 
-      border-radius: 0.75rem; 
+
+  .tab-button {
+      background-color: #161b22;
+      border: 1px solid #30363d;
+      color: #8b949e;
+      transition: all 0.2s;
   }
-  
-  .glass-emerald {
-      background-color: rgba(6, 175, 120, 0.8); 
-      border-color: #06af78; 
+  .tab-button.active {
+      background-color: #1f6feb;
+      color: #ffffff;
+      border-color: #1f6feb;
+      box-shadow: 0 2px 10px rgba(31, 111, 235, 0.4);
   }
-  .glass-emerald:hover {
-      background-color: rgba(4, 150, 100, 0.9); 
-      border-color: #049664; 
+  .tab-content {
+      display: none;
+  }
+  .tab-content.active {
+      display: block;
   }
 
+  .primary-button {
+      background-color: #1f6feb;
+      color: white;
+      border: 1px solid #1f6feb;
+      transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
+  }
+  .primary-button:hover:not(:disabled) {
+      background-color: #388bfd;
+      border-color: #388bfd;
+      box-shadow: 0 4px 10px rgba(31, 111, 235, 0.5);
+      transform: translateY(-1px);
+  }
+  .primary-button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+  }
+
+  .file-input-style::-webkit-file-upload-button {
+      background-color: #238636; 
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+  }
+  .file-input-style:hover::-webkit-file-upload-button {
+      background-color: #2ea043; 
+  }
+
+  .file-list-note {
+      background-color: rgba(31, 111, 235, 0.1); 
+      border-left: 4px solid #1f6feb; 
+      color: #79c0ff; 
+  }
+  .file-list-note li {
+      color: #a5b0c0; 
+  }
+  
   .spinner {
-    border: 4px solid rgba(255, 255, 255, 0.3);
-    border-top: 4px solid #fff;
+    border: 3px solid rgba(201, 209, 217, 0.3);
+    border-top: 3px solid #1f6feb;
     border-radius: 50%;
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
     animation: spin 1s linear infinite;
-    margin-left: 0.5rem;
   }
   @keyframes spin {
     0% { transform: rotate(0deg); }
@@ -94,70 +113,114 @@
     background-color: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(5px);
   }
-  
   .modal-content {
-      background-color: rgba(255, 255, 255, 0.05); 
-      backdrop-filter: blur(15px); 
-      border: 1px solid rgba(255, 255, 255, 0.25); 
-      box-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.5); 
+      background-color: #161b22; 
+      border: 1px solid #30363d; 
   }
   
   #modalOutputContainer::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
+    height: 6px;
   }
   #modalOutputContainer::-webkit-scrollbar-thumb {
-    background-color: #049664; 
-    border-radius: 4px;
+    background-color: #1f6feb; 
+    border-radius: 3px;
   }
   #modalOutputContainer::-webkit-scrollbar-track {
-    background: #1f2937;
-    border-radius: 4px;
-  }
-  
-  .file-list-card {
-      background-color: rgba(6, 175, 120, 0.15); 
-      border-left: 4px solid #06af78; 
-      color: #d1fae5; 
-  }
-  .file-list-card li {
-      color: #a7f3d0; 
-  }
-  
-  .custom-file-input {
-      color: #d1d5db; 
-  }
-  .custom-file-input::-webkit-file-upload-button {
-      background-color: #06af78; 
-      color: white;
-  }
-  .custom-file-input:hover::-webkit-file-upload-button {
-      background-color: #049664; 
+    background: #0d1117;
+    border-radius: 3px;
   }
   
   footer {
-      z-index: 15; 
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background-color: #161b22; 
+      border-top: 1px solid #30363d;
+      color: #8b949e;
+      z-index: 10;
+  }
+
+  #matrix-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: #0d1117; 
+      z-index: 0;
+      opacity: 0.1;
+  }
+
+  .main-content {
+      z-index: 5;
+      position: relative;
   }
   
+  .header-title {
+      background-image: linear-gradient(to right, #79c0ff, #c9d1d9); 
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: 0 3px 6px rgba(0, 0, 0, 0.4); 
+  }
+
+  .status-base {
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.9em;
+  }
+  .status-success {
+      background-color: #23863622;
+      color: #2ea043;
+      border: 1px solid #238636;
+  }
+  .status-error {
+      background-color: #f8d7da22;
+      color: #f79a78;
+      border: 1px solid #f79a78;
+  }
+  .status-info {
+      background-color: #6e768122;
+      color: #8b949e;
+      border: 1px solid #6e7681;
+  }
+
 </style>
 </head>
-<body class="min-h-screen flex flex-col items-center pb-16">
+<body>
   
     <canvas id="matrix-canvas"></canvas>
 
-    <div class="main-content w-full max-w-xl lg:max-w-3xl flex flex-col items-center px-4 sm:px-8 pt-4 sm:pt-6 pb-4 sm:pb-6">
+    <div class="main-content w-full max-w-4xl flex flex-col items-center px-4 sm:px-6 pt-4">
 
-        <h2 class="header-title text-3xl md:text-4xl font-extrabold text-center mb-8 mt-4 tracking-tight">
-          CSV TO JSON CONVERTER
-        </h2>
+        <h1 class="header-title text-3xl md:text-5xl font-extrabold text-center mb-8 tracking-tight">
+          CSV TOOLBOX 🛠️
+        </h1>
+        
+        <div class="w-full">
+            <div class="flex border-b border-[#30363d] mb-6">
+                <button id="tab-json" onclick="changeTab('json')" class="tab-button active py-3 px-6 text-sm font-semibold rounded-t-lg focus:outline-none flex items-center space-x-2">
+                    <i data-lucide="table-2" class="w-4 h-4"></i>
+                    <span>CSV to JSON</span>
+                </button>
+                <button id="tab-promo" onclick="changeTab('promo')" class="tab-button py-3 px-6 text-sm font-semibold rounded-t-lg ml-2 focus:outline-none flex items-center space-x-2">
+                    <i data-lucide="zap" class="w-4 h-4"></i>
+                    <span>Convert Promo CSV</span>
+                </button>
+            </div>
+        </div>
 
-        <div class="glass-effect p-6 md:p-8 max-w-lg mx-auto rounded-2xl border-emerald-500 w-full">
+        <div id="content-json" class="tab-content active glass-card p-6 md:p-8 max-w-xl mx-auto rounded-xl w-full">
           
           <p class="text-lg font-semibold text-gray-200 mb-4 flex items-center">
-            <i data-lucide="upload-cloud" class="w-5 h-5 text-emerald-400 mr-2"></i>
-            <span>Unggah Berkas CSV ( 3 File )</span>
+            <i data-lucide="upload-cloud" class="w-5 h-5 text-[#1f6feb] mr-2"></i>
+            <span>Unggah Berkas CSV</span>
           </p>
           
-          <div class="file-list-card p-4 rounded-lg mb-6 text-sm">
+          <div class="file-list-note p-4 rounded-lg mb-6 text-sm">
             <ul class="list-disc list-inside space-y-1 ml-2">
               <li>UGD_BARCODE.CSV</li>
               <li>UGD_PRODMAST.CSV</li>
@@ -165,23 +228,40 @@
             </ul>
           </div>
           
-          <input type="file" id="csvFiles" multiple class="w-full text-sm custom-file-input file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-emerald-600 file:text-white hover:file:bg-emerald-500 transition duration-150 mb-6">
+          <input type="file" id="csvFiles" multiple class="w-full text-sm file-input-style mb-6 py-2 px-1 rounded-lg">
           
           <button id="convertBtn" onclick="convertCSVtoJSON()" 
-              class="w-full glass-button-base glass-emerald py-3 px-6 shadow-lg hover:shadow-xl transform transition duration-200 hover:scale-[1.005] active:scale-[0.99] flex items-center justify-center space-x-2 focus:ring-4 focus:ring-emerald-300 focus:ring-offset-2">
-            <i data-lucide="zap" class="h-5 w-5"></i>
+              class="w-full primary-button py-3 px-6 rounded-lg flex items-center justify-center space-x-2">
+            <i data-lucide="code" class="h-5 w-5"></i>
             <span id="buttonText">Konversi ke JSON</span>
-            <div id="loadingSpinner" class="spinner hidden"></div>
+            <div id="loadingSpinner" class="spinner hidden ml-2"></div>
           </button>
         </div>
-
+        
+        <div id="content-promo" class="tab-content glass-card p-6 md:p-8 max-w-xl mx-auto rounded-xl w-full">
+            <p class="text-lg font-semibold text-gray-200 mb-4 flex items-center">
+                <i data-lucide="percent" class="w-5 h-5 text-[#1f6feb] mr-2"></i>
+                <span>Unggah Berkas CSV</span>
+            </p>
+            
+            <label for="promoCsvFile" class="block text-left mb-2 text-sm font-medium text-gray-300">• UGD_promo_matriks.CSV</label>
+            <input type="file" id="promoCsvFile" accept=".csv, .txt" class="w-full text-sm file-input-style mb-6 py-2 px-1 rounded-lg">
+            
+            <button onclick="processAndDownload()" class="w-full primary-button py-3 px-6 rounded-lg flex items-center justify-center space-x-2">
+                <i data-lucide="download" class="h-5 w-5"></i>
+                <span>Proses & Unduh File CSV</span>
+            </button>
+        </div>
+        
         <div class="max-w-4xl mx-auto w-full mt-6 text-center">
-            <p id="mainStatus" class="text-sm text-gray-400 italic">Siap untuk konversi.</p>
+            <div id="mainStatus" class="status-info italic mx-auto max-w-md">Siap untuk konversi.</div>
         </div>
     </div>
 
-    <footer class="fixed bottom-0 left-0 w-full bg-gray-900 text-emerald-400 text-xs py-3 text-center border-t border-gray-700 shadow-xl">
-      ~ &copy; Made With 🖤 By M.H.R ~
+    <footer>
+      <div class="text-center text-xs py-3">
+        ~ &copy; Made With 🖤 By M.H.R ~
+      </div>
     </footer>
 
     <div id="jsonModal" class="modal hidden fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -190,7 +270,7 @@
         <div class="modal-content p-6 md:p-8 rounded-2xl max-w-4xl w-full z-10">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold text-gray-100 flex items-center">
-                    <i data-lucide="code" class="w-5 h-5 text-emerald-400 mr-2"></i>
+                    <i data-lucide="code-2" class="w-5 h-5 text-[#1f6feb] mr-2"></i>
                     Hasil Konversi JSON
                 </h3>
                 <button onclick="closeModal()" class="text-gray-400 hover:text-gray-100 transition duration-150 p-1 rounded-full hover:bg-white/10">
@@ -198,13 +278,13 @@
                 </button>
             </div>
             
-            <div id="modalOutputContainer" class="bg-gray-900 text-emerald-400 p-4 rounded-lg overflow-y-auto font-mono text-xs md:text-sm max-h-[70vh] min-h-[100px] w-full border border-gray-700">
+            <div id="modalOutputContainer" class="bg-[#161b22] text-[#79c0ff] p-4 rounded-lg overflow-y-auto font-mono text-xs md:text-sm max-h-[70vh] min-h-[100px] w-full border border-[#30363d]">
                 <pre id="output" class="whitespace-pre-wrap"></pre>
             </div>
             
             <div class="text-center mt-6 flex flex-col justify-center">
                 <button id="downloadBtn" onclick="downloadJSON()" 
-                        class="glass-button-base glass-emerald py-2.5 px-6 shadow-md hover:shadow-lg transform transition duration-200 hover:scale-[1.03] flex items-center justify-center space-x-2 w-full max-w-xs mx-auto">
+                        class="primary-button py-2.5 px-6 rounded-lg flex items-center justify-center space-x-2 w-full max-w-xs mx-auto">
                   <i data-lucide="download" class="w-5 h-5"></i>
                   <span>Download JSON</span>
                 </button>
@@ -231,10 +311,10 @@
     }
 
     function drawMatrix() {
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.04)'; 
+        ctx.fillStyle = 'rgba(13, 17, 23, 0.04)'; 
         ctx.fillRect(0, 0, width, height);
 
-        ctx.fillStyle = '#0C6'; 
+        ctx.fillStyle = '#1f6feb'; 
         ctx.font = font_size + 'px monospace';
 
         for (let i = 0; i < drops.length; i++) {
@@ -277,7 +357,27 @@
                drops[i] = 1; 
             }
         }
+        changeTab('json');
     });
+
+    function changeTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.classList.remove('active');
+        });
+
+        document.getElementById(`content-${tabName}`).classList.add('active');
+        document.getElementById(`tab-${tabName}`).classList.add('active');
+
+        if (tabName === 'json') {
+             showStatus('Siap untuk konversi CSV ke JSON.', 'info');
+        } else if (tabName === 'promo') {
+             showStatus('Siap untuk memproses data Promo CSV.', 'info');
+        }
+        
+    }
 
     function getElement(id) {
         return document.getElementById(id);
@@ -300,16 +400,17 @@
         }
     }
 
-    function showStatus(message, isError = false) {
+    function showStatus(message, type = 'info') {
         const status = getElement('mainStatus');
         status.textContent = message;
 
-        if (isError) {
-            status.classList.remove('text-gray-400');
-            status.classList.add('text-red-400', 'font-bold');
+        status.classList.remove('status-success', 'status-error', 'status-info');
+        if (type === 'error') {
+            status.classList.add('status-error');
+        } else if (type === 'success') {
+            status.classList.add('status-success');
         } else {
-            status.classList.remove('text-red-400', 'font-bold');
-            status.classList.add('text-gray-400');
+            status.classList.add('status-info');
         }
     }
 
@@ -321,12 +422,12 @@
         output.textContent = jsonText;
         
         if (isError) {
-            output.classList.remove('text-emerald-400');
+            output.classList.remove('text-[#79c0ff]');
             output.classList.add('text-red-400');
             downloadBtn.classList.add('hidden');
         } else {
             output.classList.remove('text-red-400');
-            output.classList.add('text-emerald-400');
+            output.classList.add('text-[#79c0ff]');
             downloadBtn.classList.remove('hidden');
         }
 
@@ -376,11 +477,11 @@
         closeModal();
 
         setButtonState(true);
-        showStatus('Memulai konversi...', false);
+        showStatus('Memulai konversi...', 'info');
 
         const files = getElement('csvFiles').files;
         if (!files || files.length < 3) {
-            showStatus("ERROR: Harap unggah semua 3 file CSV yang diperlukan! (UGD_BARCODE, UGD_PRODMAST, UGD_RAK)", true);
+            showStatus("ERROR: Harap unggah semua 3 file CSV yang diperlukan! (UGD_BARCODE, UGD_PRODMAST, UGD_RAK)", 'error');
             setButtonState(false);
             return;
         }
@@ -394,20 +495,20 @@
         }
 
         if (!fileBarcode || !fileProdmast || !fileRak) {
-            showStatus("ERROR: File CSV tidak lengkap atau nama file tidak sesuai! Pastikan ada UGD_BARCODE, UGD_PRODMAST, dan UGD_RAK.", true);
+            showStatus("ERROR: File CSV tidak lengkap atau nama file tidak sesuai! Pastikan ada UGD_BARCODE, UGD_PRODMAST, dan UGD_RAK.", 'error');
             setButtonState(false);
             return;
         }
 
         try {
-            showStatus('Membaca file UGD_BARCODE.CSV...', false);
+            showStatus('Membaca file UGD_BARCODE.CSV...', 'info');
             const barcodeData = await readCSV(fileBarcode);
-            showStatus('Membaca file UGD_PRODMAST.CSV...', false);
+            showStatus('Membaca file UGD_PRODMAST.CSV...', 'info');
             const prodmastData = await readCSV(fileProdmast);
-            showStatus('Membaca file UGD_RAK.CSV...', false);
+            showStatus('Membaca file UGD_RAK.CSV...', 'info');
             const rakData = await readCSV(fileRak);
             
-            showStatus('Memproses dan menggabungkan data ...', false);
+            showStatus('Memproses dan menggabungkan data ...', 'info');
 
             let barcodeMap = {};
             barcodeData.forEach(row => {
@@ -463,11 +564,11 @@
 
 
             showModal(JSON.stringify(jsonResult, null, 2), false);
-            showStatus('Konversi Berhasil! Hasil ditampilkan dalam pop-up.', false);
+            showStatus('Konversi Berhasil! Hasil ditampilkan dalam pop-up.', 'success');
 
         } catch (error) {
             const errorMessage = `ERROR: Gagal dalam pemrosesan data. Detail: ${error.message}`;
-            showStatus(errorMessage, true);
+            showStatus(errorMessage, 'error');
             showModal(errorMessage, true);
         } finally {
             setButtonState(false);
@@ -476,7 +577,7 @@
 
     function downloadJSON() {
         if (jsonResult.length === 0) {
-            showStatus("ERROR: Tidak ada data JSON untuk diunduh.", true);
+            showStatus("ERROR: Tidak ada data JSON untuk diunduh.", 'error');
             return;
         }
 
@@ -493,7 +594,119 @@
         link.href = URL.createObjectURL(blob);
         link.click();
         closeModal();
-        showStatus('JSON berhasil diunduh.', false);
+        showStatus('JSON berhasil diunduh.', 'success');
+    }
+
+    function downloadFilePromo(content) {
+        const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        
+        const now = new Date();
+        const day = String(now.getDate()).padStart(2, '0');
+        const month = String(now.getMonth() + 1).padStart(2, '0'); 
+        const year = now.getFullYear();
+        const filename = `Promo_${day}-${month}-${year}.csv`;
+        
+        link.setAttribute("href", url);
+        link.setAttribute("download", filename);
+        
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        return filename;
+    }
+
+    function processAndDownload() {
+        const fileInput = document.getElementById('promoCsvFile');
+
+        showStatus('Memproses... Harap tunggu.', 'info');
+
+        if (fileInput.files.length === 0) {
+            showStatus('Gagal: Pilih file terlebih dahulu.', 'error');
+            return;
+        }
+
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        const delimiter = '|';
+        const targetHeaders = ['MEKANISME', 'TANGGALAWAL', 'TANGGALAKHIR', 'ITEMSYARATORI'];
+        const outputHeaders = ['PLU', 'MEKANISME', 'TANGGALAWAL', 'TANGGALAKHIR']; 
+        let csvContentOutput = outputHeaders.join(delimiter) + '\n';
+
+        reader.onload = function(e) {
+            const csvContent = e.target.result;
+            const lines = csvContent.split('\n').filter(line => line.trim() !== '');
+            
+            if (lines.length <= 1) {
+                showStatus('Gagal: File data kosong atau hanya berisi header.', 'error');
+                return;
+            }
+
+            const headers = lines[0].toUpperCase().split(delimiter).map(h => h.trim().replace(/"/g, ''));
+            const headerIndices = targetHeaders.map(target => headers.indexOf(target));
+            const itemsyaratoriIndex = headerIndices[targetHeaders.indexOf('ITEMSYARATORI')];
+
+            if (headerIndices.some(index => index === -1)) {
+                showStatus('Gagal: Salah satu atau lebih kolom yang dibutuhkan (MEKANISME, TANGGALAWAL, TANGGALAKHIR, ITEMSYARATORI) tidak ditemukan di header file.', 'error');
+                return;
+            }
+
+            let processedRows = 0;
+
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(delimiter);
+
+                if (values.length >= Math.max(...headerIndices) + 1) {
+                    const baseValues = {
+                        MEKANISME: values[headerIndices[0]], 
+                        TANGGALAWAL: values[headerIndices[1]], 
+                        TANGGALAKHIR: values[headerIndices[2]]
+                    };
+
+                    const cleanedBaseValues = {};
+                    for (const key in baseValues) {
+                        cleanedBaseValues[key] = baseValues[key] ? baseValues[key].trim().replace(/^"|"$/g, '').replace(/""/g, '"') : '';
+                    }
+
+                    const itemsyaratoriValue = values[itemsyaratoriIndex] || '';
+                    
+                    const pluList = itemsyaratoriValue
+                                        .toUpperCase()
+                                        .split('!PLU=')
+                                        .filter(plu => plu.trim() !== '');
+
+                    if (pluList.length === 0 && Object.values(cleanedBaseValues).some(v => v)) {
+                        const rowData = { ...cleanedBaseValues, PLU: '' };
+                        const orderedRowValues = [rowData.PLU, rowData.MEKANISME, rowData.TANGGALAWAL, rowData.TANGGALAKHIR];
+                        
+                        csvContentOutput += orderedRowValues.join(delimiter) + '\n';
+                        processedRows++;
+                    } else {
+                        pluList.forEach(pluCode => {
+                            const finalPluCode = pluCode.trim().split(/[!|]/)[0];
+                            const rowData = { ...cleanedBaseValues, PLU: finalPluCode };
+                            
+                            const orderedRowValues = [rowData.PLU, rowData.MEKANISME, rowData.TANGGALAWAL, rowData.TANGGALAKHIR];
+                            csvContentOutput += orderedRowValues.join(delimiter) + '\n';
+                            
+                            processedRows++;
+                        });
+                    }
+                }
+            }
+
+            const filename = downloadFilePromo(csvContentOutput.trim());
+            
+            showStatus(`Proses selesai. ${processedRows} baris data berhasil diproses dan diunduh sebagai ${filename}.`, 'success');
+        };
+
+        reader.onerror = function() {
+            showStatus('Gagal membaca file. Pastikan format file sudah benar.', 'error');
+        };
+
+        reader.readAsText(file);
     }
     </script>
 
