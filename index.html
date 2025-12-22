@@ -3,289 +3,175 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CONVERT CSV</title>
+<title>CSV TO JSON</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/lucide@latest"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-      font-family: 'Inter', sans-serif;
+      font-family: 'Plus Jakarta Sans', sans-serif;
   }
   
   body {
-      background-color: #0d1117;
-      color: #c9d1d9;
+      background-color: #020617;
+      color: #f1f5f9;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding-top: 1rem;
+      padding-top: 2rem;
       padding-bottom: 5rem;
+      overflow-x: hidden;
   }
   
-  .glass-card {
-      background-color: rgba(22, 27, 34, 0.8);
-      backdrop-filter: blur(10px); 
-      border: 1px solid #30363d;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5); 
-      transition: all 0.3s ease-in-out;
+  #canvas-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
   }
 
-  .tab-button {
-      background-color: #161b22;
-      border: 1px solid #30363d;
-      color: #8b949e;
-      transition: all 0.2s;
-  }
-  .tab-button.active {
-      background-color: #1f6feb;
-      color: #ffffff;
-      border-color: #1f6feb;
-      box-shadow: 0 2px 10px rgba(31, 111, 235, 0.4);
-  }
-  .tab-content {
-      display: none;
-  }
-  .tab-content.active {
-      display: block;
+  .glass-card {
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(16px); 
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .primary-button {
-      background-color: #1f6feb;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
       color: white;
-      border: 1px solid #1f6feb;
-      transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
+      border: none;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+      transition: all 0.3s ease;
+      font-weight: 600;
   }
   .primary-button:hover:not(:disabled) {
-      background-color: #388bfd;
-      border-color: #388bfd;
-      box-shadow: 0 4px 10px rgba(31, 111, 235, 0.5);
-      transform: translateY(-1px);
-  }
-  .primary-button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
+      background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+      box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5);
+      transform: translateY(-2px);
   }
 
   .file-input-style::-webkit-file-upload-button {
-      background-color: #238636; 
-      color: white;
+      background: #f59e0b; 
+      color: #020617;
       border: none;
-      padding: 8px 16px;
-      border-radius: 6px;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 700;
       cursor: pointer;
-      transition: background-color 0.2s;
-  }
-  .file-input-style:hover::-webkit-file-upload-button {
-      background-color: #2ea043; 
   }
 
   .file-list-note {
-      background-color: rgba(31, 111, 235, 0.1); 
-      border-left: 4px solid #1f6feb; 
-      color: #79c0ff; 
-  }
-  .file-list-note li {
-      color: #a5b0c0; 
+      background: rgba(245, 158, 11, 0.05); 
+      border-left: 4px solid #f59e0b; 
+      color: #fbbf24; 
   }
   
   .spinner {
-    border: 3px solid rgba(201, 209, 217, 0.3);
-    border-top: 3px solid #1f6feb;
+    border: 3px solid rgba(16, 185, 129, 0.2);
+    border-top: 3px solid #10b981;
     border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    animation: spin 1s linear infinite;
+    width: 22px;
+    height: 22px;
+    animation: spin 0.8s linear infinite;
   }
   @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
   }
 
-  .modal {
-    transition: opacity 0.3s ease-in-out;
-  }
-  .modal.hidden {
-    opacity: 0;
-    pointer-events: none;
-  }
-  .modal-overlay {
-    background-color: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(5px);
-  }
-  .modal-content {
-      background-color: #161b22; 
-      border: 1px solid #30363d; 
-  }
-  
-  #modalOutputContainer::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  #modalOutputContainer::-webkit-scrollbar-thumb {
-    background-color: #1f6feb; 
-    border-radius: 3px;
-  }
-  #modalOutputContainer::-webkit-scrollbar-track {
-    background: #0d1117;
-    border-radius: 3px;
-  }
-  
-  footer {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      background-color: #161b22; 
-      border-top: 1px solid #30363d;
-      color: #8b949e;
-      z-index: 10;
-  }
-
-  #matrix-canvas {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      display: block;
-      background: #0d1117; 
-      z-index: 0;
-      opacity: 0.1;
-  }
-
   .main-content {
       z-index: 5;
       position: relative;
   }
-  
+
   .header-title {
-      background-image: linear-gradient(to right, #79c0ff, #c9d1d9); 
+      background: linear-gradient(to right, #10b981, #f59e0b); 
       -webkit-background-clip: text;
       background-clip: text;
       color: transparent;
-      text-shadow: 0 3px 6px rgba(0, 0, 0, 0.4); 
   }
 
-  .status-base {
-      padding: 8px 12px;
-      border-radius: 6px;
-      font-size: 0.9em;
-  }
-  .status-success {
-      background-color: #23863622;
-      color: #2ea043;
-      border: 1px solid #238636;
-  }
-  .status-error {
-      background-color: #f8d7da22;
-      color: #f79a78;
-      border: 1px solid #f79a78;
-  }
-  .status-info {
-      background-color: #6e768122;
-      color: #8b949e;
-      border: 1px solid #6e7681;
-  }
+  .status-info { background: rgba(30, 41, 59, 0.8); color: #94a3b8; border: 1px solid #334155; }
+  .status-success { background: rgba(6, 78, 59, 0.8); color: #34d399; border: 1px solid #059669; }
+  .status-error { background: rgba(127, 29, 29, 0.8); color: #f87171; border: 1px solid #b91c1c; }
 
 </style>
 </head>
 <body>
   
-    <canvas id="matrix-canvas"></canvas>
+    <div id="canvas-container">
+        <canvas id="particle-canvas"></canvas>
+    </div>
 
-    <div class="main-content w-full max-w-4xl flex flex-col items-center px-4 sm:px-6 pt-4">
+    <div class="main-content w-full max-w-4xl flex flex-col items-center px-4 sm:px-6">
 
-        <h1 class="header-title text-3xl md:text-5xl font-extrabold text-center mb-8 tracking-tight">
-          CSV TOOLBOX 🛠️
+        <h1 class="header-title text-4xl md:text-6xl font-black text-center mb-2 tracking-tighter">
+          CSV TO JSON
         </h1>
-        
-        <div class="w-full">
-            <div class="flex border-b border-[#30363d] mb-6">
-                <button id="tab-json" onclick="changeTab('json')" class="tab-button active py-3 px-6 text-sm font-semibold rounded-t-lg focus:outline-none flex items-center space-x-2">
-                    <i data-lucide="table-2" class="w-4 h-4"></i>
-                    <span>CSV to JSON</span>
-                </button>
-                <button id="tab-promo" onclick="changeTab('promo')" class="tab-button py-3 px-6 text-sm font-semibold rounded-t-lg ml-2 focus:outline-none flex items-center space-x-2">
-                    <i data-lucide="zap" class="w-4 h-4"></i>
-                    <span>Convert Promo CSV</span>
-                </button>
-            </div>
-        </div>
+        <p class="text-slate-400 mb-10 font-medium tracking-widest uppercase text-xs">Convert File CSV ke JSON</p>
 
-        <div id="content-json" class="tab-content active glass-card p-6 md:p-8 max-w-xl mx-auto rounded-xl w-full">
+        <div id="content-json" class="glass-card p-8 md:p-10 max-w-xl mx-auto rounded-3xl w-full">
           
-          <p class="text-lg font-semibold text-gray-200 mb-4 flex items-center">
-            <i data-lucide="upload-cloud" class="w-5 h-5 text-[#1f6feb] mr-2"></i>
-            <span>Unggah Berkas CSV</span>
-          </p>
+          <div class="flex items-center justify-between mb-8">
+              <h2 class="text-xl font-bold text-white flex items-center">
+                <i data-lucide="file-code" class="w-6 h-6 text-[#10b981] mr-3"></i>
+                CSV to JSON
+              </h2>
+              
+          </div>
           
-          <div class="file-list-note p-4 rounded-lg mb-6 text-sm">
-            <ul class="list-disc list-inside space-y-1 ml-2">
+          <div class="file-list-note p-4 rounded-xl mb-8 text-sm">
+            <ul class="space-y-1 ml-6 list-disc opacity-90">
               <li>UGD_BARCODE.CSV</li>
               <li>UGD_PRODMAST.CSV</li>
               <li>UGD_RAK.CSV</li>
             </ul>
           </div>
           
-          <input type="file" id="csvFiles" multiple class="w-full text-sm file-input-style mb-6 py-2 px-1 rounded-lg">
+          <input type="file" id="csvFiles" multiple class="w-full text-sm file-input-style mb-8 py-3 px-4 rounded-xl border border-slate-700 bg-slate-900/50">
           
           <button id="convertBtn" onclick="convertCSVtoJSON()" 
-              class="w-full primary-button py-3 px-6 rounded-lg flex items-center justify-center space-x-2">
-            <i data-lucide="code" class="h-5 w-5"></i>
-            <span id="buttonText">Konversi ke JSON</span>
-            <div id="loadingSpinner" class="spinner hidden ml-2"></div>
+              class="w-full primary-button py-4 px-8 rounded-2xl flex items-center justify-center space-x-3 text-lg">
+            <i data-lucide="zap" class="h-5 w-5"></i>
+            <span id="buttonText">Process Files</span>
+            <div id="loadingSpinner" class="spinner hidden"></div>
           </button>
         </div>
         
-        <div id="content-promo" class="tab-content glass-card p-6 md:p-8 max-w-xl mx-auto rounded-xl w-full">
-            <p class="text-lg font-semibold text-gray-200 mb-4 flex items-center">
-                <i data-lucide="percent" class="w-5 h-5 text-[#1f6feb] mr-2"></i>
-                <span>Unggah Berkas CSV</span>
-            </p>
-            
-            <label for="promoCsvFile" class="block text-left mb-2 text-sm font-medium text-gray-300">• UGD_promo_matriks.CSV</label>
-            <input type="file" id="promoCsvFile" accept=".csv, .txt" class="w-full text-sm file-input-style mb-6 py-2 px-1 rounded-lg">
-            
-            <button onclick="processAndDownload()" class="w-full primary-button py-3 px-6 rounded-lg flex items-center justify-center space-x-2">
-                <i data-lucide="download" class="h-5 w-5"></i>
-                <span>Proses & Unduh File CSV</span>
-            </button>
-        </div>
-        
-        <div class="max-w-4xl mx-auto w-full mt-6 text-center">
-            <div id="mainStatus" class="status-info italic mx-auto max-w-md">Siap untuk konversi.</div>
+        <div class="max-w-4xl mx-auto w-full mt-8">
+            <div id="mainStatus" class="status-info text-center py-3 rounded-xl text-sm font-medium italic mx-auto max-w-md shadow-2xl">
+                Waiting for input files...
+            </div>
         </div>
     </div>
 
-    <footer>
-      <div class="text-center text-xs py-3">
-        ~ &copy; Made With 🖤 By M.H.R ~
+    <footer class="fixed bottom-0 left-0 w-full z-10">
+      <div class="text-center text-xs py-4 font-medium tracking-widest text-slate-500 bg-slate-950/50 backdrop-blur-md">
+        MADE WITH ❤️ BY <span class="text-[#10b981]">M.H.R</span> &bull; 2025
       </div>
     </footer>
 
     <div id="jsonModal" class="modal hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div class="modal-overlay absolute inset-0"></div>
-        
-        <div class="modal-content p-6 md:p-8 rounded-2xl max-w-4xl w-full z-10">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-bold text-gray-100 flex items-center">
-                    <i data-lucide="code-2" class="w-5 h-5 text-[#1f6feb] mr-2"></i>
-                    Hasil Konversi JSON
-                </h3>
-                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-100 transition duration-150 p-1 rounded-full hover:bg-white/10">
-                    <i data-lucide="x" class="w-6 h-6"></i>
+        <div class="modal-overlay absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeModal()"></div>
+        <div class="modal-content glass-card p-8 rounded-[2rem] max-w-4xl w-full z-10 border-emerald-500/30">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-white">Result Preview</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-white transition-all">
+                    <i data-lucide="x" class="w-7 h-7"></i>
                 </button>
             </div>
-            
-            <div id="modalOutputContainer" class="bg-[#161b22] text-[#79c0ff] p-4 rounded-lg overflow-y-auto font-mono text-xs md:text-sm max-h-[70vh] min-h-[100px] w-full border border-[#30363d]">
-                <pre id="output" class="whitespace-pre-wrap"></pre>
+            <div id="modalOutputContainer" class="p-6 rounded-2xl overflow-y-auto font-mono text-xs md:text-sm max-h-[60vh] min-h-[150px] w-full bg-black/40">
+                <pre id="output" class="text-emerald-400"></pre>
             </div>
-            
-            <div class="text-center mt-6 flex flex-col justify-center">
-                <button id="downloadBtn" onclick="downloadJSON()" 
-                        class="primary-button py-2.5 px-6 rounded-lg flex items-center justify-center space-x-2 w-full max-w-xs mx-auto">
-                  <i data-lucide="download" class="w-5 h-5"></i>
+            <div class="mt-8 flex justify-center">
+                <button id="downloadBtn" onclick="downloadJSON()" class="primary-button py-4 px-10 rounded-2xl flex items-center space-x-3">
+                  <i data-lucide="download" class="w-6 h-6"></i>
                   <span>Download JSON</span>
                 </button>
             </div>
@@ -295,148 +181,103 @@
     <script>
     let jsonResult = [];
 
-    const canvas = document.getElementById('matrix-canvas');
+    // Background Particle Animation
+    const canvas = document.getElementById('particle-canvas');
     const ctx = canvas.getContext('2d');
-
-    let width = canvas.width = window.innerWidth;
-    let height = canvas.height = window.innerHeight;
-
-    const characters = '01x';
-    const font_size = 14; 
-    let columns = Math.floor(width / font_size);
-    const drops = [];
-
-    for (let i = 0; i < columns; i++) {
-        drops[i] = 1; 
-    }
-
-    function drawMatrix() {
-        ctx.fillStyle = 'rgba(13, 17, 23, 0.04)'; 
-        ctx.fillRect(0, 0, width, height);
-
-        ctx.fillStyle = '#1f6feb'; 
-        ctx.font = font_size + 'px monospace';
-
-        for (let i = 0; i < drops.length; i++) {
-            const text = characters[Math.floor(Math.random() * characters.length)];
-            
-            const x = i * font_size;
-            const y = drops[i] * font_size;
-            ctx.fillText(text, x, y);
-
-            if (drops[i] * font_size > height && Math.random() > 0.975) {
-                drops[i] = 0;
-            }
-
-            drops[i]++;
-        }
-    }
+    let particles = [];
     
-    window.addEventListener('resize', () => {
-        width = canvas.width = window.innerWidth;
-        height = canvas.height = window.innerHeight;
-        columns = Math.floor(width / font_size);
-        drops.length = columns; 
-        for (let i = 0; i < columns; i++) {
-            if (drops[i] === undefined) {
-                drops[i] = 1;
-            }
+    function initParticles() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        particles = [];
+        const particleCount = Math.floor(window.innerWidth / 15);
+        for (let i = 0; i < particleCount; i++) {
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                vx: (Math.random() - 0.5) * 0.5,
+                vy: (Math.random() - 0.5) * 0.5,
+                radius: Math.random() * 2
+            });
         }
-    });
+    }
 
-    setInterval(drawMatrix, 50); 
-
-
-    document.addEventListener('DOMContentLoaded', () => {
-        lucide.createIcons();
-        width = canvas.width = window.innerWidth;
-        height = canvas.height = window.innerHeight;
-        columns = Math.floor(width / font_size);
-        if(drops.length < columns) {
-            for (let i = drops.length; i < columns; i++) {
-               drops[i] = 1; 
-            }
-        }
-        changeTab('json');
-    });
-
-    function changeTab(tabName) {
-        document.querySelectorAll('.tab-content').forEach(content => {
-            content.classList.remove('active');
-        });
-        document.querySelectorAll('.tab-button').forEach(button => {
-            button.classList.remove('active');
-        });
-
-        document.getElementById(`content-${tabName}`).classList.add('active');
-        document.getElementById(`tab-${tabName}`).classList.add('active');
-
-        if (tabName === 'json') {
-             showStatus('Siap untuk konversi CSV ke JSON.', 'info');
-        } else if (tabName === 'promo') {
-             showStatus('Siap untuk memproses data Promo CSV.', 'info');
-        }
+    function drawParticles() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'rgba(16, 185, 129, 0.3)';
+        ctx.strokeStyle = 'rgba(16, 185, 129, 0.08)';
         
+        particles.forEach((p, i) => {
+            p.x += p.vx;
+            p.y += p.vy;
+            
+            if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+            if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+            
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            for (let j = i + 1; j < particles.length; j++) {
+                const p2 = particles[j];
+                const dx = p.x - p2.x;
+                const dy = p.y - p2.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 100) {
+                    ctx.beginPath();
+                    ctx.moveTo(p.x, p.y);
+                    ctx.lineTo(p2.x, p2.y);
+                    ctx.stroke();
+                }
+            }
+        });
+        requestAnimationFrame(drawParticles);
     }
 
-    function getElement(id) {
-        return document.getElementById(id);
-    }
+    window.addEventListener('resize', initParticles);
+    initParticles();
+    drawParticles();
+
+    document.addEventListener('DOMContentLoaded', () => lucide.createIcons());
+
+    function getElement(id) { return document.getElementById(id); }
 
     function setButtonState(isLoading) {
         const btn = getElement('convertBtn');
         const text = getElement('buttonText');
         const spinner = getElement('loadingSpinner');
-        
         btn.disabled = isLoading;
         if (isLoading) {
-            text.textContent = 'Memproses...';
+            text.textContent = 'Processing...';
             spinner.classList.remove('hidden');
-            btn.classList.add('opacity-70', 'cursor-not-allowed');
         } else {
-            text.textContent = 'Konversi ke JSON';
+            text.textContent = 'Process Files';
             spinner.classList.add('hidden');
-            btn.classList.remove('opacity-70', 'cursor-not-allowed');
         }
     }
 
     function showStatus(message, type = 'info') {
         const status = getElement('mainStatus');
         status.textContent = message;
-
-        status.classList.remove('status-success', 'status-error', 'status-info');
-        if (type === 'error') {
-            status.classList.add('status-error');
-        } else if (type === 'success') {
-            status.classList.add('status-success');
-        } else {
-            status.classList.add('status-info');
-        }
+        status.className = `status-base ${type === 'error' ? 'status-error' : type === 'success' ? 'status-success' : 'status-info'} text-center py-3 rounded-xl text-sm font-medium italic mx-auto max-w-md shadow-2xl`;
     }
 
     function showModal(jsonText, isError = false) {
         const modal = getElement('jsonModal');
         const output = getElement('output');
         const downloadBtn = getElement('downloadBtn');
-
         output.textContent = jsonText;
-        
         if (isError) {
-            output.classList.remove('text-[#79c0ff]');
-            output.classList.add('text-red-400');
+            output.className = 'text-red-400';
             downloadBtn.classList.add('hidden');
         } else {
-            output.classList.remove('text-red-400');
-            output.classList.add('text-[#79c0ff]');
+            output.className = 'text-emerald-400';
             downloadBtn.classList.remove('hidden');
         }
-
         modal.classList.remove('hidden');
     }
 
-    function closeModal() {
-        getElement('jsonModal').classList.add('hidden');
-    }
+    function closeModal() { getElement('jsonModal').classList.add('hidden'); }
 
     function readCSV(file) {
         return new Promise((resolve, reject) => {
@@ -445,29 +286,18 @@
                 try {
                     const text = e.target.result;
                     const lines = text.split(/\r?\n/).filter(l => l.trim() !== ''); 
-                    if (lines.length === 0) {
-                        throw new Error(`File ${file.name} kosong.`);
-                    }
+                    if (lines.length === 0) throw new Error(`Empty file: ${file.name}`);
                     const headers = lines[0].split('|').map(h => h.trim());
-                    
-                    if (headers.some(h => !h)) {
-                        throw new Error(`Header file ${file.name} tidak valid. Pastikan menggunakan pemisah '|'.`);
-                    }
-
                     const data = lines.slice(1).map(line => {
                         const values = line.split('|').map(v => v.trim());
                         let obj = {};
-                        for (let i = 0; i < Math.min(headers.length, values.length); i++) {
-                            obj[headers[i]] = values[i];
-                        }
+                        for (let i = 0; i < Math.min(headers.length, values.length); i++) obj[headers[i]] = values[i];
                         return obj;
                     });
                     resolve(data);
-                } catch (error) {
-                    reject(error);
-                }
+                } catch (error) { reject(error); }
             };
-            reader.onerror = () => reject(new Error(`Gagal membaca file: ${file.name}`));
+            reader.onerror = () => reject(new Error(`Failed to read: ${file.name}`));
             reader.readAsText(file);
         });
     }
@@ -475,13 +305,12 @@
     async function convertCSVtoJSON() {
         jsonResult = [];
         closeModal();
-
         setButtonState(true);
-        showStatus('Memulai konversi...', 'info');
+        showStatus('Reading files...', 'info');
 
         const files = getElement('csvFiles').files;
         if (!files || files.length < 3) {
-            showStatus("ERROR: Harap unggah semua 3 file CSV yang diperlukan! (UGD_BARCODE, UGD_PRODMAST, UGD_RAK)", 'error');
+            showStatus("ERR: Upload 3 files (BARCODE, PRODMAST, RAK)", "error");
             setButtonState(false);
             return;
         }
@@ -489,226 +318,71 @@
         let fileBarcode, fileProdmast, fileRak;
         for (let f of files) {
             const name = f.name.toLowerCase();
-            if (name.includes('ugd_barcode')) fileBarcode = f;
-            else if (name.includes('ugd_prodmast')) fileProdmast = f;
-            else if (name.includes('ugd_rak')) fileRak = f;
+            if (name.includes('barcode')) fileBarcode = f;
+            else if (name.includes('prodmast')) fileProdmast = f;
+            else if (name.includes('rak')) fileRak = f;
         }
 
         if (!fileBarcode || !fileProdmast || !fileRak) {
-            showStatus("ERROR: File CSV tidak lengkap atau nama file tidak sesuai! Pastikan ada UGD_BARCODE, UGD_PRODMAST, dan UGD_RAK.", 'error');
+            showStatus("ERR: Missing required files.", "error");
             setButtonState(false);
             return;
         }
 
         try {
-            showStatus('Membaca file UGD_BARCODE.CSV...', 'info');
-            const barcodeData = await readCSV(fileBarcode);
-            showStatus('Membaca file UGD_PRODMAST.CSV...', 'info');
-            const prodmastData = await readCSV(fileProdmast);
-            showStatus('Membaca file UGD_RAK.CSV...', 'info');
-            const rakData = await readCSV(fileRak);
+            const [barcodeData, prodmastData, rakData] = await Promise.all([
+                readCSV(fileBarcode), readCSV(fileProdmast), readCSV(fileRak)
+            ]);
             
-            showStatus('Memproses dan menggabungkan data ...', 'info');
-
+            showStatus('Synthesizing data...', 'info');
             let barcodeMap = {};
             barcodeData.forEach(row => {
-                const plu = row.PLU ? row.PLU.trim() : null;
-                const barcd = row.BARCD ? row.BARCD.trim() : null;
+                const plu = row.PLU?.trim();
+                const barcd = row.BARCD?.trim();
                 if (plu && barcd) {
                     if (!barcodeMap[plu]) barcodeMap[plu] = [];
-                    if (!barcodeMap[plu].includes(barcd)) {
-                        barcodeMap[plu].push(barcd);
-                    }
+                    if (!barcodeMap[plu].includes(barcd)) barcodeMap[plu].push(barcd);
                 }
             });
 
-            await new Promise(resolve => {
-                setTimeout(() => {
-                    let result = [];
-                    prodmastData.forEach(prod => {
-                        const plu = prod.PLUMD ? prod.PLUMD.trim() : null;
-                        if (!plu) return;
+            setTimeout(() => {
+                let result = [];
+                prodmastData.forEach(prod => {
+                    const plu = prod.PLUMD?.trim();
+                    if (!plu) return;
+                    const barcdList = barcodeMap[plu] || [];
+                    const rakList = rakData.filter(r => r.PLUMD?.trim() === plu);
+                    const baseEntry = { PLU: plu, DESC2: prod.DESC2?.trim(), PRICE: prod.PRICE?.trim(), BARCD: barcdList };
 
-                        const barcdList = barcodeMap[plu] || [];
-                        const rakList = rakData.filter(r => (r.PLUMD ? r.PLUMD.trim() : null) === plu);
-                        
-                        const baseEntry = {
-                            PLU: plu,
-                            DESC2: prod.DESC2 ? prod.DESC2.trim() : null,
-                            PRICE: prod.PRICE ? prod.PRICE.trim() : null,
-                            BARCD: barcdList,
-                        };
-
-                        if (rakList.length > 0) {
-                            rakList.forEach(rak => {
-                                result.push({
-                                    ...baseEntry,
-                                    NAMA_RAK: rak.NAMA_RAK ? rak.NAMA_RAK.trim() : null,
-                                    NOSHELF: rak.NOSHELF ? rak.NOSHELF.trim() : null,
-                                    KIRIKANAN: rak.KIRIKANAN ? rak.KIRIKANAN.trim() : null
-                                });
-                            });
-                        } else {
-                            result.push({
-                                ...baseEntry,
-                                NAMA_RAK: null,
-                                NOSHELF: null,
-                                KIRIKANAN: null
-                            });
-                        }
-                    });
-                    jsonResult = result;
-                    resolve();
-                }, 10); 
-            });
-
-
-            showModal(JSON.stringify(jsonResult, null, 2), false);
-            showStatus('Konversi Berhasil! Hasil ditampilkan dalam pop-up.', 'success');
+                    if (rakList.length > 0) {
+                        rakList.forEach(rak => {
+                            result.push({ ...baseEntry, NAMA_RAK: rak.NAMA_RAK?.trim(), NOSHELF: rak.NOSHELF?.trim(), KIRIKANAN: rak.KIRIKANAN?.trim() });
+                        });
+                    } else {
+                        result.push({ ...baseEntry, NAMA_RAK: null, NOSHELF: null, KIRIKANAN: null });
+                    }
+                });
+                jsonResult = result;
+                showModal(JSON.stringify(jsonResult, null, 2), false);
+                showStatus('Success! Data converted.', 'success');
+                setButtonState(false);
+            }, 500);
 
         } catch (error) {
-            const errorMessage = `ERROR: Gagal dalam pemrosesan data. Detail: ${error.message}`;
-            showStatus(errorMessage, 'error');
-            showModal(errorMessage, true);
-        } finally {
+            showStatus(`Error: ${error.message}`, 'error');
             setButtonState(false);
         }
     }
 
     function downloadJSON() {
-        if (jsonResult.length === 0) {
-            showStatus("ERROR: Tidak ada data JSON untuk diunduh.", 'error');
-            return;
-        }
-
+        if (jsonResult.length === 0) return;
         const blob = new Blob([JSON.stringify(jsonResult, null, 2)], {type: "application/json"});
         const link = document.createElement("a");
-
-        const today = new Date();
-        const day = String(today.getDate()).padStart(2,'0');
-        const month = String(today.getMonth()+1).padStart(2,'0');
-        const year = today.getFullYear();
-        const filename = `${day}-${month}-${year}.json`;
-
-        link.download = filename;
+        link.download = `CSV_EXPORT_${new Date().getTime()}.json`;
         link.href = URL.createObjectURL(blob);
         link.click();
         closeModal();
-        showStatus('JSON berhasil diunduh.', 'success');
-    }
-
-    function downloadFilePromo(content) {
-        const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        
-        const now = new Date();
-        const day = String(now.getDate()).padStart(2, '0');
-        const month = String(now.getMonth() + 1).padStart(2, '0'); 
-        const year = now.getFullYear();
-        const filename = `Promo_${day}-${month}-${year}.csv`;
-        
-        link.setAttribute("href", url);
-        link.setAttribute("download", filename);
-        
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        return filename;
-    }
-
-    function processAndDownload() {
-        const fileInput = document.getElementById('promoCsvFile');
-
-        showStatus('Memproses... Harap tunggu.', 'info');
-
-        if (fileInput.files.length === 0) {
-            showStatus('Gagal: Pilih file terlebih dahulu.', 'error');
-            return;
-        }
-
-        const file = fileInput.files[0];
-        const reader = new FileReader();
-        const delimiter = '|';
-        const targetHeaders = ['MEKANISME', 'TANGGALAWAL', 'TANGGALAKHIR', 'ITEMSYARATORI'];
-        const outputHeaders = ['PLU', 'MEKANISME', 'TANGGALAWAL', 'TANGGALAKHIR']; 
-        let csvContentOutput = outputHeaders.join(delimiter) + '\n';
-
-        reader.onload = function(e) {
-            const csvContent = e.target.result;
-            const lines = csvContent.split('\n').filter(line => line.trim() !== '');
-            
-            if (lines.length <= 1) {
-                showStatus('Gagal: File data kosong atau hanya berisi header.', 'error');
-                return;
-            }
-
-            const headers = lines[0].toUpperCase().split(delimiter).map(h => h.trim().replace(/"/g, ''));
-            const headerIndices = targetHeaders.map(target => headers.indexOf(target));
-            const itemsyaratoriIndex = headerIndices[targetHeaders.indexOf('ITEMSYARATORI')];
-
-            if (headerIndices.some(index => index === -1)) {
-                showStatus('Gagal: Salah satu atau lebih kolom yang dibutuhkan (MEKANISME, TANGGALAWAL, TANGGALAKHIR, ITEMSYARATORI) tidak ditemukan di header file.', 'error');
-                return;
-            }
-
-            let processedRows = 0;
-
-            for (let i = 1; i < lines.length; i++) {
-                const values = lines[i].split(delimiter);
-
-                if (values.length >= Math.max(...headerIndices) + 1) {
-                    const baseValues = {
-                        MEKANISME: values[headerIndices[0]], 
-                        TANGGALAWAL: values[headerIndices[1]], 
-                        TANGGALAKHIR: values[headerIndices[2]]
-                    };
-
-                    const cleanedBaseValues = {};
-                    for (const key in baseValues) {
-                        cleanedBaseValues[key] = baseValues[key] ? baseValues[key].trim().replace(/^"|"$/g, '').replace(/""/g, '"') : '';
-                    }
-
-                    const itemsyaratoriValue = values[itemsyaratoriIndex] || '';
-                    
-                    const pluList = itemsyaratoriValue
-                                        .toUpperCase()
-                                        .split('!PLU=')
-                                        .filter(plu => plu.trim() !== '');
-
-                    if (pluList.length === 0 && Object.values(cleanedBaseValues).some(v => v)) {
-                        const rowData = { ...cleanedBaseValues, PLU: '' };
-                        const orderedRowValues = [rowData.PLU, rowData.MEKANISME, rowData.TANGGALAWAL, rowData.TANGGALAKHIR];
-                        
-                        csvContentOutput += orderedRowValues.join(delimiter) + '\n';
-                        processedRows++;
-                    } else {
-                        pluList.forEach(pluCode => {
-                            const finalPluCode = pluCode.trim().split(/[!|]/)[0];
-                            const rowData = { ...cleanedBaseValues, PLU: finalPluCode };
-                            
-                            const orderedRowValues = [rowData.PLU, rowData.MEKANISME, rowData.TANGGALAWAL, rowData.TANGGALAKHIR];
-                            csvContentOutput += orderedRowValues.join(delimiter) + '\n';
-                            
-                            processedRows++;
-                        });
-                    }
-                }
-            }
-
-            const filename = downloadFilePromo(csvContentOutput.trim());
-            
-            showStatus(`Proses selesai. ${processedRows} baris data berhasil diproses dan diunduh sebagai ${filename}.`, 'success');
-        };
-
-        reader.onerror = function() {
-            showStatus('Gagal membaca file. Pastikan format file sudah benar.', 'error');
-        };
-
-        reader.readAsText(file);
     }
     </script>
-
 </body>
 </html>
