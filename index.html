@@ -181,7 +181,6 @@
     <script>
     let jsonResult = [];
 
-    // Background Particle Animation
     const canvas = document.getElementById('particle-canvas');
     const ctx = canvas.getContext('2d');
     let particles = [];
@@ -376,9 +375,16 @@
 
     function downloadJSON() {
         if (jsonResult.length === 0) return;
+        
+        const now = new Date();
+        const date = String(now.getDate()).padStart(2, '0');
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const year = now.getFullYear();
+        const fileName = `${date}-${month}-${year}.json`;
+        
         const blob = new Blob([JSON.stringify(jsonResult, null, 2)], {type: "application/json"});
         const link = document.createElement("a");
-        link.download = `CSV_EXPORT_${new Date().getTime()}.json`;
+        link.download = fileName;
         link.href = URL.createObjectURL(blob);
         link.click();
         closeModal();
